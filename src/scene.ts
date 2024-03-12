@@ -1,282 +1,355 @@
-import GUI from 'lil-gui'
+import GUI from "lil-gui";
 import {
   AmbientLight,
   AxesHelper,
-  BoxGeometry,
-  Clock,
-  GridHelper,
+  DirectionalLightHelper,
   LoadingManager,
-  Mesh,
-  MeshLambertMaterial,
-  MeshStandardMaterial,
   PCFSoftShadowMap,
   PerspectiveCamera,
-  PlaneGeometry,
-  PointLight,
-  PointLightHelper,
   Scene,
+  Vector3,
   WebGLRenderer,
-} from 'three'
-import { DragControls } from 'three/examples/jsm/controls/DragControls'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import Stats from 'three/examples/jsm/libs/stats.module'
-import * as animations from './helpers/animations'
-import { toggleFullScreen } from './helpers/fullscreen'
-import { resizeRendererToDisplaySize } from './helpers/responsiveness'
-import './style.css'
+  DirectionalLight,
+  PlaneGeometry,
+  Mesh,
+  ShadowMaterial,
+  MeshBasicMaterial,
+  MeshStandardMaterial,
+  Euler,
+  GridHelper,
+  Box3,
+} from "three";
+import { WorldInHandControls } from "@world-in-hand-controls/threejs-world-in-hand";
+import Stats from "three/examples/jsm/libs/stats.module";
+import { toggleFullScreen } from "./helpers/fullscreen";
+import "./style.css";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 
-const CANVAS_ID = 'scene'
+const CANVAS_ID = "scene";
 
-let canvas: HTMLElement
-let renderer: WebGLRenderer
-let scene: Scene
-let loadingManager: LoadingManager
-let ambientLight: AmbientLight
-let pointLight: PointLight
-let cube: Mesh
-let camera: PerspectiveCamera
-let cameraControls: OrbitControls
-let dragControls: DragControls
-let axesHelper: AxesHelper
-let pointLightHelper: PointLightHelper
-let clock: Clock
-let stats: Stats
-let gui: GUI
+let canvas: HTMLCanvasElement;
+let context: WebGL2RenderingContext;
+let renderer: WebGLRenderer;
+let scene: Scene;
+let loadingManager: LoadingManager;
+let ambientLight: AmbientLight;
+let directionalLight: DirectionalLight;
+let directionalLightHelper: DirectionalLightHelper;
+let camera: PerspectiveCamera;
+let cameraControls: WorldInHandControls | OrbitControls;
+let axesHelper: AxesHelper;
+let stats: Stats;
+let gui: GUI;
 
-const animation = { enabled: true, play: true }
+let updateRequested = false;
+let resizeRequested = true;
 
-init()
-animate()
+init();
+
+function requestUpdate() {
+  if (updateRequested) return;
+
+  updateRequested = true;
+  requestAnimationFrame(animate);
+}
 
 function init() {
   // ===== 🖼️ CANVAS, RENDERER, & SCENE =====
   {
-    canvas = document.querySelector(`canvas#${CANVAS_ID}`)!
-    renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true })
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-    renderer.shadowMap.enabled = true
-    renderer.shadowMap.type = PCFSoftShadowMap
-    scene = new Scene()
-  }
+    canvas = document.querySelector(
+      `canvas#${CANVAS_ID}`
+    )! as HTMLCanvasElement;
+    context = canvas.getContext("webgl2") as WebGL2RenderingContext;
+    renderer = new WebGLRenderer({
+      canvas,
+      context,
+      antialias: true,
+      alpha: true,
+      logarithmicDepthBuffer: false,
+    });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = PCFSoftShadowMap;
 
-  // ===== 👨🏻‍💼 LOADING MANAGER =====
-  {
-    loadingManager = new LoadingManager()
+    window.addEventListener("resize", () => {
+      resizeRequested = true;
+      requestUpdate();
+    });
 
-    loadingManager.onStart = () => {
-      console.log('loading started')
-    }
-    loadingManager.onProgress = (url, loaded, total) => {
-      console.log('loading in progress:')
-      console.log(`${url} -> ${loaded} / ${total}`)
-    }
-    loadingManager.onLoad = () => {
-      console.log('loaded!')
-    }
-    loadingManager.onError = () => {
-      console.log('❌ error while loading')
-    }
+    scene = new Scene();
   }
 
   // ===== 💡 LIGHTS =====
   {
-    ambientLight = new AmbientLight('white', 0.4)
-    pointLight = new PointLight('white', 20, 100)
-    pointLight.position.set(-2, 2, 2)
-    pointLight.castShadow = true
-    pointLight.shadow.radius = 4
-    pointLight.shadow.camera.near = 0.5
-    pointLight.shadow.camera.far = 4000
-    pointLight.shadow.mapSize.width = 2048
-    pointLight.shadow.mapSize.height = 2048
-    scene.add(ambientLight)
-    scene.add(pointLight)
+    ambientLight = new AmbientLight(0xffffff, 1.5);
+    scene.add(ambientLight);
+
+    // add directional light
+    directionalLight = new DirectionalLight(0xf5f5f5, 1);
+    directionalLight.position.set(0, 10, 0);
+    scene.add(directionalLight);
   }
 
   // ===== 📦 OBJECTS =====
   {
-    const sideLength = 1
-    const cubeGeometry = new BoxGeometry(sideLength, sideLength, sideLength)
-    const cubeMaterial = new MeshStandardMaterial({
-      color: '#f69f1f',
-      metalness: 0.5,
-      roughness: 0.7,
-    })
-    cube = new Mesh(cubeGeometry, cubeMaterial)
-    cube.castShadow = true
-    cube.position.y = 0.5
+     // add gridhelper
+    const size = 500;
+    const divisions = 100;
+    const gridHelper = new GridHelper(size, divisions);
+    scene.add(gridHelper);
 
-    const planeGeometry = new PlaneGeometry(3, 3)
-    const planeMaterial = new MeshLambertMaterial({
-      color: 'gray',
-      emissive: 'teal',
-      emissiveIntensity: 0.2,
-      side: 2,
-      transparent: true,
-      opacity: 0.4,
-    })
-    const plane = new Mesh(planeGeometry, planeMaterial)
-    plane.rotateX(Math.PI / 2)
-    plane.receiveShadow = true
+    // Create an array to store loaded objects
+    const loadedObjects: THREE.Object3D[] = [];
 
-    scene.add(cube)
-    scene.add(plane)
+    // Function to load a single OBJ file
+    function loadOBJ(url: string): Promise<THREE.Object3D> {
+      return new Promise((resolve, reject) => {
+        const loader = new OBJLoader();
+        loader.load(
+          url,
+          (object) => {
+            resolve(object);
+          },
+          undefined,
+          reject
+        );
+      });
+    }
+
+    // Array of OBJ file URLs to load
+    const objURLs = [];
+    for (let i = 1; i <= 19; i++)
+      objURLs.push(`./models/buildings/building${i}.obj`);
+
+    // Load each OBJ file and add it to the scene
+    async function loadObjects() {
+      try {
+        for (const url of objURLs) {
+          const object = await loadOBJ(url);
+          loadedObjects.push(object);
+        }
+        // Perform actions once all objects are loaded
+        console.log("All objects loaded:", loadedObjects);
+
+        // make a grid with chunks of buildings with streets in between
+        const gridSize = 10; // Number of cells in each row/column
+        const cellSize = 15; // Size of each cell in Three.js units
+        const streetWidth = 2; // Width of streets in Three.js units
+        const groundColors = [0x00ff00, 0xb3b3b3, 0x8b4513]; // Green, Grey, Brown
+        const streetColor = 0x808080; // Grey
+        
+        for (let x = 0; x < gridSize; x++) {
+            for (let z = 0; z < gridSize; z++) {
+        
+                // Randomly select ground color
+                const groundColor = groundColors[Math.floor(Math.random() * groundColors.length)];
+        
+                // Create and add ground plane for this square
+                const groundGeometry = new PlaneGeometry(cellSize-streetWidth/2, cellSize-streetWidth/2);
+                const groundMaterial = new MeshBasicMaterial({ color: groundColor });
+                const ground = new Mesh(groundGeometry, groundMaterial);
+                ground.position.set((x - gridSize / 2) * cellSize + cellSize / 2, -0.1, (z - gridSize / 2) * cellSize + cellSize / 2);
+                ground.rotation.x = -Math.PI / 2;
+                scene.add(ground);
+        
+                // right streets
+                {
+                    const streetGeometry = new PlaneGeometry(streetWidth, cellSize);
+                    const streetMaterial = new MeshBasicMaterial({ color: streetColor });
+                    const street = new Mesh(streetGeometry, streetMaterial);
+                    street.position.set((x - gridSize / 2) * cellSize, -0.09, (z - gridSize / 2) * cellSize + cellSize / 2);
+                    street.rotation.x = -Math.PI / 2;
+
+                    scene.add(street);
+                }
+        
+                // bottom streets
+                {
+                    const streetGeometry = new PlaneGeometry(cellSize, streetWidth);
+                    const streetMaterial = new MeshBasicMaterial({ color: streetColor });
+                    const street = new Mesh(streetGeometry, streetMaterial);
+                    street.position.set((x - gridSize / 2) * cellSize + cellSize / 2, -0.09, (z - gridSize / 2) * cellSize);
+                    street.rotation.x = -Math.PI / 2;
+
+                    scene.add(street);
+                }
+
+              // Randomly select 1-4 buildings
+              const numBuildings = Math.floor(Math.random() * 4) + 1;
+              // generate positions of each corner of the cell
+              let cornerPositions = [
+                { x: (x - gridSize / 2) * cellSize + cellSize / 4 , z: (z - gridSize / 2) * cellSize + streetWidth*2},//or
+                { x: (x - gridSize / 2) * cellSize + cellSize / 4, z: (z - gridSize / 2) * cellSize - streetWidth*2 + cellSize},//ol
+                { x: (x - gridSize / 2) * cellSize + cellSize - streetWidth*2 , z: (z - gridSize / 2) * cellSize + streetWidth*2 },//ur
+                { x: (x - gridSize / 2) * cellSize + cellSize - streetWidth*2, z: (z - gridSize / 2) * cellSize + cellSize - streetWidth*2 }//ul
+              ];
+
+              for (let i = 0; i < numBuildings; i++) {
+                // Randomly select a building
+                const building = loadedObjects[Math.floor(Math.random() * loadedObjects.length)].clone();
+
+                let cornerPosition;
+                if(numBuildings !== 4) {
+                  const idx = Math.floor(Math.random() * cornerPositions.length); // Generate a random index
+                  cornerPosition = cornerPositions.splice(idx, 1)[0]; 
+                } else {
+                  cornerPosition = cornerPositions[i];
+                }
+                building.position.set(cornerPosition.x, building.position.y, cornerPosition.z);
+
+                building.scale.set(0.01, 0.01, 0.01);
+                scene.add(building);
+              }
+
+            }
+        }
+      } catch (error) {
+        console.error("Error loading objects:", error);
+      }
+    }
+
+    // Call the function to load objects
+    loadObjects();
   }
 
   // ===== 🎥 CAMERA =====
   {
-    camera = new PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, 100)
-    camera.position.set(2, 2, 5)
+    camera = new PerspectiveCamera(
+      50,
+      canvas.clientWidth / canvas.clientHeight,
+      0.1,
+      1000
+    );
+    camera.position.set(25, 5, 4);
+    camera.lookAt(new Vector3(0, 0, 0));
   }
 
   // ===== 🕹️ CONTROLS =====
   {
-    cameraControls = new OrbitControls(camera, canvas)
-    cameraControls.target = cube.position.clone()
-    cameraControls.enableDamping = true
-    cameraControls.autoRotate = false
-    cameraControls.update()
-
-    dragControls = new DragControls([cube], camera, renderer.domElement)
-    dragControls.addEventListener('hoveron', (event) => {
-      const mesh = event.object as Mesh
-      const material = mesh.material as MeshStandardMaterial
-      material.emissive.set('orange')
-    })
-    dragControls.addEventListener('hoveroff', (event) => {
-      const mesh = event.object as Mesh
-      const material = mesh.material as MeshStandardMaterial
-      material.emissive.set('black')
-    })
-    dragControls.addEventListener('dragstart', (event) => {
-      const mesh = event.object as Mesh
-      const material = mesh.material as MeshStandardMaterial
-      cameraControls.enabled = false
-      animation.play = false
-      material.emissive.set('black')
-      material.opacity = 0.7
-      material.needsUpdate = true
-    })
-    dragControls.addEventListener('dragend', (event) => {
-      cameraControls.enabled = true
-      animation.play = true
-      const mesh = event.object as Mesh
-      const material = mesh.material as MeshStandardMaterial
-      material.emissive.set('black')
-      material.opacity = 1
-      material.needsUpdate = true
-    })
-    dragControls.enabled = false
+    cameraControls = new WorldInHandControls(
+      camera,
+      canvas as HTMLCanvasElement,
+      renderer,
+      scene
+    );
+    cameraControls.allowRotationBelowGroundPlane = false;
+    cameraControls.rotateAroundMousePosition = false;
+    cameraControls.useBottomOfBoundingBoxAsGroundPlane = false;
+    cameraControls.addEventListener("change", requestUpdate);
 
     // Full screen
-    window.addEventListener('dblclick', (event) => {
+    window.addEventListener("dblclick", (event) => {
       if (event.target === canvas) {
-        toggleFullScreen(canvas)
+        toggleFullScreen(canvas);
       }
-    })
+    });
   }
 
   // ===== 🪄 HELPERS =====
   {
-    axesHelper = new AxesHelper(4)
-    axesHelper.visible = false
-    scene.add(axesHelper)
+    axesHelper = new AxesHelper(4);
+    axesHelper.visible = false;
+    scene.add(axesHelper);
 
-    pointLightHelper = new PointLightHelper(pointLight, undefined, 'orange')
-    pointLightHelper.visible = false
-    scene.add(pointLightHelper)
-
-    const gridHelper = new GridHelper(20, 20, 'teal', 'darkgray')
-    gridHelper.position.y = -0.01
-    scene.add(gridHelper)
+    directionalLightHelper = new DirectionalLightHelper(directionalLight, 5);
+    directionalLightHelper.visible = false;
+    scene.add(directionalLightHelper);
   }
 
   // ===== 📈 STATS & CLOCK =====
   {
-    clock = new Clock()
-    stats = new Stats()
-    document.body.appendChild(stats.dom)
+    stats = new Stats();
+    document.body.appendChild(stats.dom);
   }
 
   // ==== 🐞 DEBUG GUI ====
   {
-    gui = new GUI({ title: '🐞 Debug GUI', width: 300 })
+    gui = new GUI({ title: "🐞 Debug GUI", width: 300 });
 
-    const cubeOneFolder = gui.addFolder('Cube one')
+    const navigationFolder = gui.addFolder("Navigation");
+    const navigationModes = ["world-in-hand", "orbit"];
+    const navigationMode = { current: null };
+    navigationFolder
+      .add(navigationMode, "current", navigationModes)
+      .name("mode")
+      .onChange((value: string) => {
+        if (value === "world-in-hand") {
+          if (cameraControls !== undefined) {
+            cameraControls.dispose();
+            cameraControls.removeEventListener("change", requestUpdate);
+          }
+          cameraControls = new WorldInHandControls(
+            camera,
+            canvas as HTMLCanvasElement,
+            renderer,
+            scene
+          );
+          cameraControls.addEventListener("change", requestUpdate);
+          requestUpdate();
+        } else if (value === "orbit") {
+          if (cameraControls !== undefined) {
+            cameraControls.dispose();
+            cameraControls.removeEventListener("change", requestUpdate);
+          }
+          cameraControls = new OrbitControls(camera, canvas);
+          cameraControls.addEventListener("change", requestUpdate);
+          requestUpdate();
+        }
+      });
 
-    cubeOneFolder.add(cube.position, 'x').min(-5).max(5).step(0.5).name('pos x')
-    cubeOneFolder.add(cube.position, 'y').min(-5).max(5).step(0.5).name('pos y')
-    cubeOneFolder.add(cube.position, 'z').min(-5).max(5).step(0.5).name('pos z')
+    const lightsFolder = gui.addFolder("Lights");
+    lightsFolder.add(ambientLight, "visible").name("ambient light");
+    lightsFolder.add(directionalLight, "visible").name("directional light");
 
-    cubeOneFolder.add(cube.material, 'wireframe')
-    cubeOneFolder.addColor(cube.material, 'color')
-    cubeOneFolder.add(cube.material, 'metalness', 0, 1, 0.1)
-    cubeOneFolder.add(cube.material, 'roughness', 0, 1, 0.1)
-
-    cubeOneFolder
-      .add(cube.rotation, 'x', -Math.PI * 2, Math.PI * 2, Math.PI / 4)
-      .name('rotate x')
-    cubeOneFolder
-      .add(cube.rotation, 'y', -Math.PI * 2, Math.PI * 2, Math.PI / 4)
-      .name('rotate y')
-    cubeOneFolder
-      .add(cube.rotation, 'z', -Math.PI * 2, Math.PI * 2, Math.PI / 4)
-      .name('rotate z')
-
-    cubeOneFolder.add(animation, 'enabled').name('animated')
-
-    const controlsFolder = gui.addFolder('Controls')
-    controlsFolder.add(dragControls, 'enabled').name('drag controls')
-
-    const lightsFolder = gui.addFolder('Lights')
-    lightsFolder.add(pointLight, 'visible').name('point light')
-    lightsFolder.add(ambientLight, 'visible').name('ambient light')
-
-    const helpersFolder = gui.addFolder('Helpers')
-    helpersFolder.add(axesHelper, 'visible').name('axes')
-    helpersFolder.add(pointLightHelper, 'visible').name('pointLight')
-
-    const cameraFolder = gui.addFolder('Camera')
-    cameraFolder.add(cameraControls, 'autoRotate')
+    const helpersFolder = gui.addFolder("Helpers");
+    helpersFolder.add(axesHelper, "visible").name("axes");
 
     // persist GUI state in local storage on changes
     gui.onFinishChange(() => {
-      const guiState = gui.save()
-      localStorage.setItem('guiState', JSON.stringify(guiState))
-    })
+      const guiState = gui.save();
+      localStorage.setItem("guiState", JSON.stringify(guiState));
+      requestUpdate();
+    });
 
     // load GUI state if available in local storage
-    const guiState = localStorage.getItem('guiState')
-    if (guiState) gui.load(JSON.parse(guiState))
+    const guiState = localStorage.getItem("guiState");
+    if (guiState) gui.load(JSON.parse(guiState));
 
     // reset GUI state button
     const resetGui = () => {
-      localStorage.removeItem('guiState')
-      gui.reset()
-    }
-    gui.add({ resetGui }, 'resetGui').name('RESET')
+      localStorage.removeItem("guiState");
+      gui.reset();
+      requestUpdate();
+    };
+    gui.add({ resetGui }, "resetGui").name("RESET");
 
-    gui.close()
+    gui.close();
   }
 }
 
 function animate() {
-  requestAnimationFrame(animate)
+  updateRequested = false;
 
-  stats.update()
+  stats.update();
 
-  if (animation.enabled && animation.play) {
-    animations.rotate(cube, clock, Math.PI / 3)
-    animations.bounce(cube, clock, 1, 0.5, 0.5)
+  if (resizeRequested) {
+    const canvas = renderer.domElement;
+    camera.aspect = canvas.clientWidth / canvas.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+    // @ts-expect-error three.js type definitions seem broken, this works.
+    scene.dispatchEvent({ type: "resize" });
   }
 
-  if (resizeRendererToDisplaySize(renderer)) {
-    const canvas = renderer.domElement
-    camera.aspect = canvas.clientWidth / canvas.clientHeight
-    camera.updateProjectionMatrix()
+  if (cameraControls instanceof WorldInHandControls) {
+    renderer.setRenderTarget(cameraControls.navigationRenderTarget);
+    renderer.render(scene, camera);
+  } else {
+    renderer.setRenderTarget(null);
+    renderer.render(scene, camera);
   }
 
-  cameraControls.update()
-
-  renderer.render(scene, camera)
+  cameraControls.update();
 }

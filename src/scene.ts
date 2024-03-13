@@ -12,19 +12,15 @@ import {
   DirectionalLight,
   PlaneGeometry,
   Mesh,
-  ShadowMaterial,
   MeshBasicMaterial,
-  MeshStandardMaterial,
-  Euler,
   GridHelper,
-  Box3,
+  Group,
 } from "three";
 import { WorldInHandControls } from "@world-in-hand-controls/threejs-world-in-hand";
 import Stats from "three/examples/jsm/libs/stats.module";
 import { toggleFullScreen } from "./helpers/fullscreen";
 import "./style.css";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 
 const CANVAS_ID = "scene";
@@ -45,6 +41,9 @@ let gui: GUI;
 
 let updateRequested = false;
 let resizeRequested = true;
+let objectsLoaded = false;
+
+const loadedObjects: THREE.Object3D[] = [];
 
 init();
 
@@ -94,16 +93,12 @@ function init() {
 
   // ===== 📦 OBJECTS =====
   {
-     // add gridhelper
-    const size = 500;
-    const divisions = 100;
+    // add gridhelper
+    const size = 1500;
+    const divisions = 500;
     const gridHelper = new GridHelper(size, divisions);
     scene.add(gridHelper);
 
-    // Create an array to store loaded objects
-    const loadedObjects: THREE.Object3D[] = [];
-
-    // Function to load a single OBJ file
     function loadOBJ(url: string): Promise<THREE.Object3D> {
       return new Promise((resolve, reject) => {
         const loader = new OBJLoader();
@@ -118,93 +113,19 @@ function init() {
       });
     }
 
-    // Array of OBJ file URLs to load
-    const objURLs = [];
+    const objURLs: string[] = [];
     for (let i = 1; i <= 19; i++)
       objURLs.push(`./models/buildings/building${i}.obj`);
 
-    // Load each OBJ file and add it to the scene
     async function loadObjects() {
       try {
         for (const url of objURLs) {
           const object = await loadOBJ(url);
           loadedObjects.push(object);
         }
-        // Perform actions once all objects are loaded
         console.log("All objects loaded:", loadedObjects);
-
-        // make a grid with chunks of buildings with streets in between
-        const gridSize = 10; // Number of cells in each row/column
-        const cellSize = 15; // Size of each cell in Three.js units
-        const streetWidth = 2; // Width of streets in Three.js units
-        const groundColors = [0x00ff00, 0xb3b3b3, 0x8b4513]; // Green, Grey, Brown
-        const streetColor = 0x808080; // Grey
+        objectsLoaded = true;
         
-        for (let x = 0; x < gridSize; x++) {
-            for (let z = 0; z < gridSize; z++) {
-        
-                // Randomly select ground color
-                const groundColor = groundColors[Math.floor(Math.random() * groundColors.length)];
-        
-                // Create and add ground plane for this square
-                const groundGeometry = new PlaneGeometry(cellSize-streetWidth/2, cellSize-streetWidth/2);
-                const groundMaterial = new MeshBasicMaterial({ color: groundColor });
-                const ground = new Mesh(groundGeometry, groundMaterial);
-                ground.position.set((x - gridSize / 2) * cellSize + cellSize / 2, -0.1, (z - gridSize / 2) * cellSize + cellSize / 2);
-                ground.rotation.x = -Math.PI / 2;
-                scene.add(ground);
-        
-                // right streets
-                {
-                    const streetGeometry = new PlaneGeometry(streetWidth, cellSize);
-                    const streetMaterial = new MeshBasicMaterial({ color: streetColor });
-                    const street = new Mesh(streetGeometry, streetMaterial);
-                    street.position.set((x - gridSize / 2) * cellSize, -0.09, (z - gridSize / 2) * cellSize + cellSize / 2);
-                    street.rotation.x = -Math.PI / 2;
-
-                    scene.add(street);
-                }
-        
-                // bottom streets
-                {
-                    const streetGeometry = new PlaneGeometry(cellSize, streetWidth);
-                    const streetMaterial = new MeshBasicMaterial({ color: streetColor });
-                    const street = new Mesh(streetGeometry, streetMaterial);
-                    street.position.set((x - gridSize / 2) * cellSize + cellSize / 2, -0.09, (z - gridSize / 2) * cellSize);
-                    street.rotation.x = -Math.PI / 2;
-
-                    scene.add(street);
-                }
-
-              // Randomly select 1-4 buildings
-              const numBuildings = Math.floor(Math.random() * 4) + 1;
-              // generate positions of each corner of the cell
-              let cornerPositions = [
-                { x: (x - gridSize / 2) * cellSize + cellSize / 4 , z: (z - gridSize / 2) * cellSize + streetWidth*2},//or
-                { x: (x - gridSize / 2) * cellSize + cellSize / 4, z: (z - gridSize / 2) * cellSize - streetWidth*2 + cellSize},//ol
-                { x: (x - gridSize / 2) * cellSize + cellSize - streetWidth*2 , z: (z - gridSize / 2) * cellSize + streetWidth*2 },//ur
-                { x: (x - gridSize / 2) * cellSize + cellSize - streetWidth*2, z: (z - gridSize / 2) * cellSize + cellSize - streetWidth*2 }//ul
-              ];
-
-              for (let i = 0; i < numBuildings; i++) {
-                // Randomly select a building
-                const building = loadedObjects[Math.floor(Math.random() * loadedObjects.length)].clone();
-
-                let cornerPosition;
-                if(numBuildings !== 4) {
-                  const idx = Math.floor(Math.random() * cornerPositions.length); // Generate a random index
-                  cornerPosition = cornerPositions.splice(idx, 1)[0]; 
-                } else {
-                  cornerPosition = cornerPositions[i];
-                }
-                building.position.set(cornerPosition.x, building.position.y, cornerPosition.z);
-
-                building.scale.set(0.01, 0.01, 0.01);
-                scene.add(building);
-              }
-
-            }
-        }
       } catch (error) {
         console.error("Error loading objects:", error);
       }
@@ -222,7 +143,7 @@ function init() {
       0.1,
       1000
     );
-    camera.position.set(25, 5, 4);
+    camera.position.set(25, 25, 4);
     camera.lookAt(new Vector3(0, 0, 0));
   }
 
@@ -286,6 +207,7 @@ function init() {
             renderer,
             scene
           );
+          cameraControls.allowRotationBelowGroundPlane = false;
           cameraControls.addEventListener("change", requestUpdate);
           requestUpdate();
         } else if (value === "orbit") {
@@ -329,6 +251,168 @@ function init() {
   }
 }
 
+
+const chunkSize = 150; // Size of each chunk in world units
+const visibleChunks = new Set(); // Set to track visible chunks
+
+function generateChunk(chunkX: number, chunkZ: number) {
+  const chunk = new Group();
+
+  const gridSize = 10;
+  const cellSize = 15;
+  const streetWidth = 2;
+  chunk.position.set(chunkX, 0, chunkZ);
+
+
+  const groundColors = [0x00ff00, 0xb3b3b3, 0x8b4513]; // Green, Grey, Brown
+  const streetColor = 0x808080; // Grey
+
+  for (let x = 0; x < gridSize; x++) {
+    for (let z = 0; z < gridSize; z++) {
+      const groundColor =
+        groundColors[Math.floor(Math.random() * groundColors.length)];
+
+      // Create and add ground plane for this square
+      const groundGeometry = new PlaneGeometry(
+        cellSize - streetWidth / 2,
+        cellSize - streetWidth / 2
+      );
+      const groundMaterial = new MeshBasicMaterial({
+        color: groundColor,
+      });
+      const ground = new Mesh(groundGeometry, groundMaterial);
+      ground.position.set(
+        (x - gridSize / 2) * cellSize + chunkX * chunkSize + cellSize / 2 - streetWidth / 2 * chunkX,
+        -0.1,
+        (z - gridSize / 2) * cellSize + chunkZ * chunkSize + cellSize / 2 - streetWidth / 2 * chunkZ
+      );
+      ground.rotation.x = -Math.PI / 2;
+      chunk.add(ground);
+
+      // right streets
+      {
+        const streetGeometry = new PlaneGeometry(streetWidth, cellSize);
+        const streetMaterial = new MeshBasicMaterial({
+          color: streetColor,
+        });
+        const street = new Mesh(streetGeometry, streetMaterial);
+        street.position.set(
+          (x - gridSize / 2) * cellSize + chunkX * chunkSize,
+          -0.09,
+          (z - gridSize / 2) * cellSize + chunkZ * chunkSize + cellSize / 2
+        );
+        street.rotation.x = -Math.PI / 2;
+
+        scene.add(street);
+      }
+
+      // bottom streets
+      {
+        const streetGeometry = new PlaneGeometry(cellSize, streetWidth);
+        const streetMaterial = new MeshBasicMaterial({
+          color: streetColor,
+        });
+        const street = new Mesh(streetGeometry, streetMaterial);
+        street.position.set(
+          (x - gridSize / 2) * cellSize + chunkX * chunkSize + cellSize / 2 - streetWidth / 2 * chunkX,
+          -0.09,
+          (z - gridSize / 2) * cellSize + chunkZ * chunkSize - streetWidth / 2 * chunkZ
+        );
+        street.rotation.x = -Math.PI / 2;
+
+        chunk.add(street);
+      }
+
+      const numBuildings = Math.floor(Math.random() * 4) + 1;
+      // generate positions of each corner of the cell
+      let cornerPositions = [
+        {
+          x: (x - gridSize / 2) * cellSize + cellSize / 4 - streetWidth / 2 * chunkX,
+          z: (z - gridSize / 2) * cellSize + streetWidth * 2 - streetWidth / 2 * chunkZ,
+        }, //ur
+        {
+          x: (x - gridSize / 2) * cellSize + cellSize / 4  - streetWidth / 2 * chunkX,
+          z: (z - gridSize / 2) * cellSize + cellSize - streetWidth * 2 - streetWidth / 2 * chunkZ,
+        }, //ul
+        {
+          x: (x - gridSize / 2) * cellSize + cellSize - streetWidth * 2 - streetWidth / 2 * chunkX,
+          z: (z - gridSize / 2) * cellSize + streetWidth * 2 - streetWidth / 2 * chunkZ,
+        }, //lr
+        {
+          x: (x - gridSize / 2) * cellSize + cellSize - streetWidth * 2 - streetWidth / 2 * chunkX,
+          z: (z - gridSize / 2) * cellSize + cellSize - streetWidth * 2 - streetWidth / 2 * chunkZ,
+        }, //ll
+      ]
+
+      for (let i = 0; i < numBuildings; i++) {
+        const building =
+          loadedObjects[
+            Math.floor(Math.random() * loadedObjects.length)
+          ].clone();
+
+        let cornerPosition;
+        if (numBuildings !== 4) {
+          const idx = Math.floor(
+            Math.random() * cornerPositions.length
+          );
+          cornerPosition = cornerPositions.splice(idx, 1)[0];
+        } else {
+          cornerPosition = cornerPositions[i];
+        }
+        building.position.set(
+          chunkX * chunkSize + cornerPosition.x,
+          building.position.y,
+          chunkZ * chunkSize + cornerPosition.z
+        );
+        //const rotationY = Math.random() * Math.PI * 2;
+        //building.rotation.set(0, rotationY, 0);
+
+        building.scale.set(0.01, 0.01, 0.01);
+        chunk.add(building);
+      }
+    }
+  }
+
+  visibleChunks.add(`${chunkX},${chunkZ}`);
+  chunk.name = `chunk-${chunkX}-${chunkZ}`;
+  scene.add(chunk);
+}
+
+function removeChunk(chunkX: number, chunkZ: number) {
+  const chunk = scene.getObjectByName(`chunk-${chunkX}-${chunkZ}`);
+  if (chunk) {
+    scene.remove(chunk);
+    visibleChunks.delete(`${chunkX},${chunkZ}`);
+  }
+}
+
+function updateVisibleChunks(cameraPosition: Vector3) {
+  const cameraChunkX = Math.floor(cameraPosition.x / chunkSize);
+  const cameraChunkZ = Math.floor(cameraPosition.z / chunkSize);
+  console.log("visibleChunks", visibleChunks)
+
+  const visibleChunkRadius = 1;
+  for (let x = cameraChunkX - visibleChunkRadius; x <= cameraChunkX + visibleChunkRadius; x++) {
+    for (let z = cameraChunkZ - visibleChunkRadius; z <= cameraChunkZ + visibleChunkRadius; z++) {
+      if (!visibleChunks.has(`${x},${z}`)) {
+        generateChunk(x, z);
+      }
+    }
+  }
+
+  // remove no longer visible chunks
+  visibleChunks.forEach(chunk => {
+    const chunkData = chunk as { x: number; z: number };
+    if (Math.abs(chunkData.x - cameraChunkX) > 1 || Math.abs(chunkData.z - cameraChunkZ) > 1) {
+        removeChunk(chunkData.x, chunkData.z);
+    }
+  });
+}
+
+function updateCity(cameraPosition: Vector3) {
+  updateVisibleChunks(cameraPosition);
+}
+
 function animate() {
   updateRequested = false;
 
@@ -350,6 +434,8 @@ function animate() {
     renderer.setRenderTarget(null);
     renderer.render(scene, camera);
   }
+
+  if (objectsLoaded) updateCity(camera.position);
 
   cameraControls.update();
 }

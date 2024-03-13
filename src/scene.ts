@@ -3,7 +3,6 @@ import {
   AmbientLight,
   AxesHelper,
   DirectionalLightHelper,
-  LoadingManager,
   PCFSoftShadowMap,
   PerspectiveCamera,
   Scene,
@@ -15,6 +14,7 @@ import {
   MeshBasicMaterial,
   GridHelper,
   Group,
+  HemisphereLight,
 } from "three";
 import { WorldInHandControls } from "@world-in-hand-controls/threejs-world-in-hand";
 import Stats from "three/examples/jsm/libs/stats.module";
@@ -29,10 +29,10 @@ let canvas: HTMLCanvasElement;
 let context: WebGL2RenderingContext;
 let renderer: WebGLRenderer;
 let scene: Scene;
-let loadingManager: LoadingManager;
 let ambientLight: AmbientLight;
 let directionalLight: DirectionalLight;
 let directionalLightHelper: DirectionalLightHelper;
+let hemiLight: HemisphereLight;
 let camera: PerspectiveCamera;
 let cameraControls: WorldInHandControls | OrbitControls;
 let axesHelper: AxesHelper;
@@ -87,17 +87,27 @@ function init() {
 
     // add directional light
     directionalLight = new DirectionalLight(0xf5f5f5, 1);
-    directionalLight.position.set(0, 10, 0);
+    directionalLight.position.set(15, 15, 0);
+    /*directionalLight.castShadow = true;
+    directionalLight.shadow.mapSize.width = 1024; // Adjust shadow map size as needed
+    directionalLight.shadow.mapSize.height = 1024;
+    directionalLight.shadow.camera.near = 0.5; // Adjust shadow camera parameters as needed
+    directionalLight.shadow.camera.far = 500;*/
+
+    // sky color ground color intensity 
+    /*hemiLight = new HemisphereLight( 0x0000ff, 0x00ff00, 0.6 );
+    hemiLight.position.set(15, 15, 0);
+    scene.add(hemiLight);*/
     scene.add(directionalLight);
   }
 
   // ===== 📦 OBJECTS =====
   {
     // add gridhelper
-    const size = 1500;
+    /*const size = 1500;
     const divisions = 500;
     const gridHelper = new GridHelper(size, divisions);
-    scene.add(gridHelper);
+    scene.add(gridHelper);*/
 
     function loadOBJ(url: string): Promise<THREE.Object3D> {
       return new Promise((resolve, reject) => {
@@ -123,7 +133,7 @@ function init() {
           const object = await loadOBJ(url);
           loadedObjects.push(object);
         }
-        console.log("All objects loaded:", loadedObjects);
+        console.log("All objects loaded");
         objectsLoaded = true;
         
       } catch (error) {
@@ -263,7 +273,6 @@ function generateChunk(chunkX: number, chunkZ: number) {
   const streetWidth = 2;
   chunk.position.set(chunkX, 0, chunkZ);
 
-
   const groundColors = [0x00ff00, 0xb3b3b3, 0x8b4513]; // Green, Grey, Brown
   const streetColor = 0x808080; // Grey
 
@@ -272,7 +281,7 @@ function generateChunk(chunkX: number, chunkZ: number) {
       const groundColor =
         groundColors[Math.floor(Math.random() * groundColors.length)];
 
-      // Create and add ground plane for this square
+        
       const groundGeometry = new PlaneGeometry(
         cellSize - streetWidth / 2,
         cellSize - streetWidth / 2
@@ -281,6 +290,7 @@ function generateChunk(chunkX: number, chunkZ: number) {
         color: groundColor,
       });
       const ground = new Mesh(groundGeometry, groundMaterial);
+      //ground.receiveShadow = true;
       ground.position.set(
         (x - gridSize / 2) * cellSize + chunkX * chunkSize + cellSize / 2 - streetWidth / 2 * chunkX,
         -0.1,
@@ -296,6 +306,7 @@ function generateChunk(chunkX: number, chunkZ: number) {
           color: streetColor,
         });
         const street = new Mesh(streetGeometry, streetMaterial);
+        //street.receiveShadow = true;
         street.position.set(
           (x - gridSize / 2) * cellSize + chunkX * chunkSize,
           -0.09,
@@ -313,9 +324,11 @@ function generateChunk(chunkX: number, chunkZ: number) {
           color: streetColor,
         });
         const street = new Mesh(streetGeometry, streetMaterial);
+        //street.receiveShadow = true;
+
         street.position.set(
           (x - gridSize / 2) * cellSize + chunkX * chunkSize + cellSize / 2 - streetWidth / 2 * chunkX,
-          -0.09,
+          -0.089,
           (z - gridSize / 2) * cellSize + chunkZ * chunkSize - streetWidth / 2 * chunkZ
         );
         street.rotation.x = -Math.PI / 2;
@@ -368,6 +381,7 @@ function generateChunk(chunkX: number, chunkZ: number) {
         //building.rotation.set(0, rotationY, 0);
 
         building.scale.set(0.01, 0.01, 0.01);
+        //building.castShadow = true;
         chunk.add(building);
       }
     }
@@ -380,6 +394,7 @@ function generateChunk(chunkX: number, chunkZ: number) {
 
 function removeChunk(chunkX: number, chunkZ: number) {
   const chunk = scene.getObjectByName(`chunk-${chunkX}-${chunkZ}`);
+
   if (chunk) {
     scene.remove(chunk);
     visibleChunks.delete(`${chunkX},${chunkZ}`);
@@ -389,7 +404,6 @@ function removeChunk(chunkX: number, chunkZ: number) {
 function updateVisibleChunks(cameraPosition: Vector3) {
   const cameraChunkX = Math.floor(cameraPosition.x / chunkSize);
   const cameraChunkZ = Math.floor(cameraPosition.z / chunkSize);
-  console.log("visibleChunks", visibleChunks)
 
   const visibleChunkRadius = 1;
   for (let x = cameraChunkX - visibleChunkRadius; x <= cameraChunkX + visibleChunkRadius; x++) {
@@ -401,16 +415,22 @@ function updateVisibleChunks(cameraPosition: Vector3) {
   }
 
   // remove no longer visible chunks
-  visibleChunks.forEach(chunk => {
-    const chunkData = chunk as { x: number; z: number };
-    if (Math.abs(chunkData.x - cameraChunkX) > 1 || Math.abs(chunkData.z - cameraChunkZ) > 1) {
-        removeChunk(chunkData.x, chunkData.z);
+  for (const chunk of visibleChunks) {
+    const [x, z] = (chunk as string).split(",").map(Number);
+    if (
+      x < cameraChunkX - visibleChunkRadius ||
+      x > cameraChunkX + visibleChunkRadius ||
+      z < cameraChunkZ - visibleChunkRadius ||
+      z > cameraChunkZ + visibleChunkRadius
+    ) {
+      removeChunk(x, z);
     }
-  });
+  }
 }
 
 function updateCity(cameraPosition: Vector3) {
   updateVisibleChunks(cameraPosition);
+  scene.dispatchEvent({type: 'change'});
 }
 
 function animate() {

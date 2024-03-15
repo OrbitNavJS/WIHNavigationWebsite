@@ -265,8 +265,21 @@ function init() {
 const chunkSize = 150;
 const visibleChunks = new Set();
 const chunksToRemove = new Set();
+const chunkCache = new Map();
 
 function generateChunk(chunkX: number, chunkZ: number) {
+  const chunkKey = `${chunkX},${chunkZ}`;
+
+  // check if chunk is cached
+  if (chunkCache.has(chunkKey)) {
+    const chunk = chunkCache.get(chunkKey); 
+    visibleChunks.add(chunkKey);
+    scene.add(chunk);
+    chunkCache.delete(chunkKey);
+    return;
+  }
+
+
   const chunk = new Group();
 
   const gridSize = 10;
@@ -382,25 +395,35 @@ function generateChunk(chunkX: number, chunkZ: number) {
         //building.rotation.set(0, rotationY, 0);
 
         building.scale.set(0.01, 0.01, 0.01);
+        building.frustumCulled = true; // should be default
         //building.castShadow = true;
         chunk.add(building);
       }
     }
   }
 
-  console.log(`Adding chunk ${chunkX},${chunkZ}`);
-  visibleChunks.add(`${chunkX},${chunkZ}`);
-  chunk.name = `chunk-${chunkX}-${chunkZ}`;
+  console.log(`Adding chunk ${chunkKey}`);
+
+  visibleChunks.add(chunkKey);
+  chunk.name = `chunk-${chunkKey}`;
   scene.add(chunk);
 }
 
 function removeChunk(chunkX: number, chunkZ: number) {
-  console.log(`Removing chunk ${chunkX},${chunkZ}`);
-  const chunk = scene.getObjectByName(`chunk-${chunkX}-${chunkZ}`);
+  const chunkKey = `${chunkX},${chunkZ}`;
+
+  console.log(`Removing chunk ${chunkKey}`);
+  const chunk = scene.getObjectByName(`chunk-${chunkKey}`);
 
   if (chunk) {
     scene.remove(chunk);
-    visibleChunks.delete(`${chunkX},${chunkZ}`);
+    visibleChunks.delete(`${chunkKey}`);
+
+    chunkCache.set(chunkKey, chunk);
+    if (chunkCache.size > 10) {
+      const oldestChunkKey = chunkCache.keys().next().value;
+      chunkCache.delete(oldestChunkKey);
+    }
   }
 }
 

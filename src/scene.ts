@@ -262,8 +262,9 @@ function init() {
 }
 
 
-const chunkSize = 150; // Size of each chunk in world units
-const visibleChunks = new Set(); // Set to track visible chunks
+const chunkSize = 150;
+const visibleChunks = new Set();
+const chunksToRemove = new Set();
 
 function generateChunk(chunkX: number, chunkZ: number) {
   const chunk = new Group();
@@ -387,12 +388,14 @@ function generateChunk(chunkX: number, chunkZ: number) {
     }
   }
 
+  console.log(`Adding chunk ${chunkX},${chunkZ}`);
   visibleChunks.add(`${chunkX},${chunkZ}`);
   chunk.name = `chunk-${chunkX}-${chunkZ}`;
   scene.add(chunk);
 }
 
 function removeChunk(chunkX: number, chunkZ: number) {
+  console.log(`Removing chunk ${chunkX},${chunkZ}`);
   const chunk = scene.getObjectByName(`chunk-${chunkX}-${chunkZ}`);
 
   if (chunk) {
@@ -404,17 +407,18 @@ function removeChunk(chunkX: number, chunkZ: number) {
 function updateVisibleChunks(cameraPosition: Vector3) {
   const cameraChunkX = Math.floor(cameraPosition.x / chunkSize);
   const cameraChunkZ = Math.floor(cameraPosition.z / chunkSize);
+  let sceneSizeChanged = false;
 
   const visibleChunkRadius = 1;
   for (let x = cameraChunkX - visibleChunkRadius; x <= cameraChunkX + visibleChunkRadius; x++) {
     for (let z = cameraChunkZ - visibleChunkRadius; z <= cameraChunkZ + visibleChunkRadius; z++) {
       if (!visibleChunks.has(`${x},${z}`)) {
         generateChunk(x, z);
+        sceneSizeChanged = true;
       }
     }
   }
 
-  // remove no longer visible chunks
   for (const chunk of visibleChunks) {
     const [x, z] = (chunk as string).split(",").map(Number);
     if (
@@ -423,14 +427,28 @@ function updateVisibleChunks(cameraPosition: Vector3) {
       z < cameraChunkZ - visibleChunkRadius ||
       z > cameraChunkZ + visibleChunkRadius
     ) {
-      removeChunk(x, z);
+      chunksToRemove.add(`${x},${z}`);
     }
+  }
+
+  // remove batch of no longer visible chunks
+  if (chunksToRemove.size >= 8) {
+    for (const chunk of chunksToRemove) {
+      const [chunkX, chunkZ] = (chunk as string).split(',').map(Number);
+      removeChunk(chunkX, chunkZ);
+      visibleChunks.delete(chunk);
+      sceneSizeChanged = true;
+    }
+    chunksToRemove.clear();
+  }
+
+  if (sceneSizeChanged) {
+    scene.dispatchEvent({type: 'change'});
   }
 }
 
 function updateCity(cameraPosition: Vector3) {
   updateVisibleChunks(cameraPosition);
-  scene.dispatchEvent({type: 'change'});
 }
 
 function animate() {

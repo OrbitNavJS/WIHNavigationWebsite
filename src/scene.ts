@@ -15,6 +15,8 @@ import {
   GridHelper,
   Group,
   HemisphereLight,
+  Ray,
+  Plane,
 } from "three";
 import { WorldInHandControls } from "@world-in-hand-controls/threejs-world-in-hand";
 import Stats from "three/examples/jsm/libs/stats.module";
@@ -217,14 +219,17 @@ function removeChunk(chunkX: number, chunkZ: number) {
   }
 }
 
-function updateVisibleChunks(cameraPosition: Vector3) {
-  const cameraChunkX = Math.floor(cameraPosition.x / chunkSize);
-  const cameraChunkZ = Math.floor(cameraPosition.z / chunkSize);
+function updateVisibleChunks(cameraPosition: Vector3, camera: PerspectiveCamera) {
+  let screenCenter= new Vector3();
+  new Ray(cameraPosition, camera.getWorldDirection(new Vector3())).intersectPlane(new Plane(new Vector3(0,1,0), -1), screenCenter)
+
+  const chunkX = Math.floor(screenCenter.x / chunkSize);
+  const chunkZ = Math.floor(screenCenter.z / chunkSize);
   let sceneSizeChanged = false;
 
   const visibleChunkRadius = 1;
-  for (let x = cameraChunkX - visibleChunkRadius; x <= cameraChunkX + visibleChunkRadius; x++) {
-    for (let z = cameraChunkZ - visibleChunkRadius; z <= cameraChunkZ + visibleChunkRadius; z++) {
+  for (let x = chunkX - visibleChunkRadius; x <= chunkX + visibleChunkRadius; x++) {
+    for (let z = chunkZ - visibleChunkRadius; z <= chunkZ + visibleChunkRadius; z++) {
       if (!visibleChunks.has(`${x},${z}`)) {
         generateChunk(x, z);
         sceneSizeChanged = true;
@@ -235,10 +240,10 @@ function updateVisibleChunks(cameraPosition: Vector3) {
   for (const chunk of visibleChunks) {
     const [x, z] = (chunk as string).split(",").map(Number);
     if (
-        x < cameraChunkX - visibleChunkRadius ||
-        x > cameraChunkX + visibleChunkRadius ||
-        z < cameraChunkZ - visibleChunkRadius ||
-        z > cameraChunkZ + visibleChunkRadius
+        x < chunkX - visibleChunkRadius ||
+        x > chunkX + visibleChunkRadius ||
+        z < chunkZ - visibleChunkRadius ||
+        z > chunkZ + visibleChunkRadius
     ) {
       chunksToRemove.add(`${x},${z}`);
     }
@@ -260,8 +265,8 @@ function updateVisibleChunks(cameraPosition: Vector3) {
   }
 }
 
-function updateCity(cameraPosition: Vector3) {
-  updateVisibleChunks(cameraPosition);
+function updateCity(cameraPosition: Vector3, camera: PerspectiveCamera) {
+  updateVisibleChunks(cameraPosition, camera);
 }
 
 async function init() {
@@ -357,7 +362,7 @@ async function init() {
         }
         console.log("All objects loaded");
         objectsLoaded = true;
-        updateCity(camera.position);
+        updateCity(camera.position, camera);
         requestUpdate();
       } catch (error) {
         console.error("Error loading objects:", error);
@@ -494,7 +499,7 @@ function animate() {
     renderer.render(scene, camera);
   }
 
-  if (objectsLoaded) updateCity(camera.position);
+  if (objectsLoaded) updateCity(camera.position, camera);
 
   cameraControls.update();
 }

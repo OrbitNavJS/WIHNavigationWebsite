@@ -45,8 +45,6 @@ let objectsLoaded = false;
 
 const loadedObjects: THREE.Object3D[] = [];
 
-init();
-
 function requestUpdate() {
   if (updateRequested) return;
 
@@ -54,11 +52,223 @@ function requestUpdate() {
   requestAnimationFrame(animate);
 }
 
-function init() {
+const chunkSize = 150;
+const visibleChunks = new Set();
+const chunksToRemove = new Set();
+const chunkCache = new Map();
+
+function generateChunk(chunkX: number, chunkZ: number) {
+  const chunkKey = `${chunkX},${chunkZ}`;
+
+  // check if chunk is cached
+  if (chunkCache.has(chunkKey)) {
+    const chunk = chunkCache.get(chunkKey);
+    visibleChunks.add(chunkKey);
+    scene.add(chunk);
+    chunkCache.delete(chunkKey);
+    return;
+  }
+
+
+  const chunk = new Group();
+
+  const gridSize = 10;
+  const cellSize = 15;
+  const streetWidth = 2;
+  chunk.position.set(chunkX, 0, chunkZ);
+
+  const groundColors = [0x00ff00, 0xb3b3b3, 0x8b4513]; // Green, Grey, Brown
+  const streetColor = 0x808080; // Grey
+
+  for (let x = 0; x < gridSize; x++) {
+    for (let z = 0; z < gridSize; z++) {
+      const groundColor =
+          groundColors[Math.floor(Math.random() * groundColors.length)];
+
+
+      const groundGeometry = new PlaneGeometry(
+          cellSize - streetWidth / 2,
+          cellSize - streetWidth / 2
+      );
+      const groundMaterial = new MeshBasicMaterial({
+        color: groundColor,
+      });
+      const ground = new Mesh(groundGeometry, groundMaterial);
+      //ground.receiveShadow = true;
+      ground.position.set(
+          (x - gridSize / 2) * cellSize + chunkX * chunkSize + cellSize / 2 - streetWidth / 2 * chunkX,
+          -0.1,
+          (z - gridSize / 2) * cellSize + chunkZ * chunkSize + cellSize / 2 - streetWidth / 2 * chunkZ
+      );
+      ground.rotation.x = -Math.PI / 2;
+      chunk.add(ground);
+
+      // right streets
+      {
+        const streetGeometry = new PlaneGeometry(streetWidth, cellSize);
+        const streetMaterial = new MeshBasicMaterial({
+          color: streetColor,
+        });
+        const street = new Mesh(streetGeometry, streetMaterial);
+        //street.receiveShadow = true;
+        street.position.set(
+            (x - gridSize / 2) * cellSize + chunkX * chunkSize,
+            -0.09,
+            (z - gridSize / 2) * cellSize + chunkZ * chunkSize + cellSize / 2
+        );
+        street.rotation.x = -Math.PI / 2;
+
+        scene.add(street);
+      }
+
+      // bottom streets
+      {
+        const streetGeometry = new PlaneGeometry(cellSize, streetWidth);
+        const streetMaterial = new MeshBasicMaterial({
+          color: streetColor,
+        });
+        const street = new Mesh(streetGeometry, streetMaterial);
+        //street.receiveShadow = true;
+
+        street.position.set(
+            (x - gridSize / 2) * cellSize + chunkX * chunkSize + cellSize / 2 - streetWidth / 2 * chunkX,
+            -0.089,
+            (z - gridSize / 2) * cellSize + chunkZ * chunkSize - streetWidth / 2 * chunkZ
+        );
+        street.rotation.x = -Math.PI / 2;
+
+        chunk.add(street);
+      }
+
+      const numBuildings = Math.floor(Math.random() * 4) + 1;
+      // generate positions of each corner of the cell
+      let cornerPositions = [
+        {
+          x: (x - gridSize / 2) * cellSize + cellSize / 4 - streetWidth / 2 * chunkX,
+          z: (z - gridSize / 2) * cellSize + streetWidth * 2 - streetWidth / 2 * chunkZ,
+        }, //ur
+        {
+          x: (x - gridSize / 2) * cellSize + cellSize / 4  - streetWidth / 2 * chunkX,
+          z: (z - gridSize / 2) * cellSize + cellSize - streetWidth * 2 - streetWidth / 2 * chunkZ,
+        }, //ul
+        {
+          x: (x - gridSize / 2) * cellSize + cellSize - streetWidth * 2 - streetWidth / 2 * chunkX,
+          z: (z - gridSize / 2) * cellSize + streetWidth * 2 - streetWidth / 2 * chunkZ,
+        }, //lr
+        {
+          x: (x - gridSize / 2) * cellSize + cellSize - streetWidth * 2 - streetWidth / 2 * chunkX,
+          z: (z - gridSize / 2) * cellSize + cellSize - streetWidth * 2 - streetWidth / 2 * chunkZ,
+        }, //ll
+      ]
+
+      for (let i = 0; i < numBuildings; i++) {
+        const building =
+            loadedObjects[
+                Math.floor(Math.random() * loadedObjects.length)
+                ].clone();
+
+        let cornerPosition;
+        if (numBuildings !== 4) {
+          const idx = Math.floor(
+              Math.random() * cornerPositions.length
+          );
+          cornerPosition = cornerPositions.splice(idx, 1)[0];
+        } else {
+          cornerPosition = cornerPositions[i];
+        }
+        building.position.set(
+            chunkX * chunkSize + cornerPosition.x,
+            building.position.y,
+            chunkZ * chunkSize + cornerPosition.z
+        );
+        //const rotationY = Math.random() * Math.PI * 2;
+        //building.rotation.set(0, rotationY, 0);
+
+        building.scale.set(0.01, 0.01, 0.01);
+        building.frustumCulled = true; // should be default
+        //building.castShadow = true;
+        chunk.add(building);
+      }
+    }
+  }
+
+  console.log(`Adding chunk ${chunkKey}`);
+
+  visibleChunks.add(chunkKey);
+  chunk.name = `chunk-${chunkKey}`;
+  scene.add(chunk);
+}
+
+function removeChunk(chunkX: number, chunkZ: number) {
+  const chunkKey = `${chunkX},${chunkZ}`;
+
+  console.log(`Removing chunk ${chunkKey}`);
+  const chunk = scene.getObjectByName(`chunk-${chunkKey}`);
+
+  if (chunk) {
+    scene.remove(chunk);
+    visibleChunks.delete(`${chunkKey}`);
+
+    chunkCache.set(chunkKey, chunk);
+    if (chunkCache.size > 10) {
+      const oldestChunkKey = chunkCache.keys().next().value;
+      chunkCache.delete(oldestChunkKey);
+    }
+  }
+}
+
+function updateVisibleChunks(cameraPosition: Vector3) {
+  const cameraChunkX = Math.floor(cameraPosition.x / chunkSize);
+  const cameraChunkZ = Math.floor(cameraPosition.z / chunkSize);
+  let sceneSizeChanged = false;
+
+  const visibleChunkRadius = 1;
+  for (let x = cameraChunkX - visibleChunkRadius; x <= cameraChunkX + visibleChunkRadius; x++) {
+    for (let z = cameraChunkZ - visibleChunkRadius; z <= cameraChunkZ + visibleChunkRadius; z++) {
+      if (!visibleChunks.has(`${x},${z}`)) {
+        generateChunk(x, z);
+        sceneSizeChanged = true;
+      }
+    }
+  }
+
+  for (const chunk of visibleChunks) {
+    const [x, z] = (chunk as string).split(",").map(Number);
+    if (
+        x < cameraChunkX - visibleChunkRadius ||
+        x > cameraChunkX + visibleChunkRadius ||
+        z < cameraChunkZ - visibleChunkRadius ||
+        z > cameraChunkZ + visibleChunkRadius
+    ) {
+      chunksToRemove.add(`${x},${z}`);
+    }
+  }
+
+  // remove batch of no longer visible chunks
+  if (chunksToRemove.size >= 8) {
+    for (const chunk of chunksToRemove) {
+      const [chunkX, chunkZ] = (chunk as string).split(',').map(Number);
+      removeChunk(chunkX, chunkZ);
+      visibleChunks.delete(chunk);
+      sceneSizeChanged = true;
+    }
+    chunksToRemove.clear();
+  }
+
+  if (sceneSizeChanged) {
+    scene.dispatchEvent({type: 'change'});
+  }
+}
+
+function updateCity(cameraPosition: Vector3) {
+  updateVisibleChunks(cameraPosition);
+}
+
+async function init() {
   // ===== 🖼️ CANVAS, RENDERER, & SCENE =====
   {
     canvas = document.querySelector(
-      `canvas#${CANVAS_ID}`
+        `canvas#${CANVAS_ID}`
     )! as HTMLCanvasElement;
     context = canvas.getContext("webgl2") as WebGL2RenderingContext;
     renderer = new WebGLRenderer({
@@ -101,6 +311,18 @@ function init() {
     scene.add(directionalLight);
   }
 
+  // ===== 🎥 CAMERA =====
+  {
+    camera = new PerspectiveCamera(
+        50,
+        canvas.clientWidth / canvas.clientHeight,
+        0.1,
+        1000
+    );
+    camera.position.set(25, 25, 4);
+    camera.lookAt(new Vector3(0, 0, 0));
+  }
+
   // ===== 📦 OBJECTS =====
   {
     // add gridhelper
@@ -135,26 +357,15 @@ function init() {
         }
         console.log("All objects loaded");
         objectsLoaded = true;
-        
+        updateCity(camera.position);
+        requestUpdate();
       } catch (error) {
         console.error("Error loading objects:", error);
       }
     }
 
     // Call the function to load objects
-    loadObjects();
-  }
-
-  // ===== 🎥 CAMERA =====
-  {
-    camera = new PerspectiveCamera(
-      50,
-      canvas.clientWidth / canvas.clientHeight,
-      0.1,
-      1000
-    );
-    camera.position.set(25, 25, 4);
-    camera.lookAt(new Vector3(0, 0, 0));
+    await loadObjects();
   }
 
   // ===== 🕹️ CONTROLS =====
@@ -261,219 +472,6 @@ function init() {
   }
 }
 
-
-const chunkSize = 150;
-const visibleChunks = new Set();
-const chunksToRemove = new Set();
-const chunkCache = new Map();
-
-function generateChunk(chunkX: number, chunkZ: number) {
-  const chunkKey = `${chunkX},${chunkZ}`;
-
-  // check if chunk is cached
-  if (chunkCache.has(chunkKey)) {
-    const chunk = chunkCache.get(chunkKey); 
-    visibleChunks.add(chunkKey);
-    scene.add(chunk);
-    chunkCache.delete(chunkKey);
-    return;
-  }
-
-
-  const chunk = new Group();
-
-  const gridSize = 10;
-  const cellSize = 15;
-  const streetWidth = 2;
-  chunk.position.set(chunkX, 0, chunkZ);
-
-  const groundColors = [0x00ff00, 0xb3b3b3, 0x8b4513]; // Green, Grey, Brown
-  const streetColor = 0x808080; // Grey
-
-  for (let x = 0; x < gridSize; x++) {
-    for (let z = 0; z < gridSize; z++) {
-      const groundColor =
-        groundColors[Math.floor(Math.random() * groundColors.length)];
-
-        
-      const groundGeometry = new PlaneGeometry(
-        cellSize - streetWidth / 2,
-        cellSize - streetWidth / 2
-      );
-      const groundMaterial = new MeshBasicMaterial({
-        color: groundColor,
-      });
-      const ground = new Mesh(groundGeometry, groundMaterial);
-      //ground.receiveShadow = true;
-      ground.position.set(
-        (x - gridSize / 2) * cellSize + chunkX * chunkSize + cellSize / 2 - streetWidth / 2 * chunkX,
-        -0.1,
-        (z - gridSize / 2) * cellSize + chunkZ * chunkSize + cellSize / 2 - streetWidth / 2 * chunkZ
-      );
-      ground.rotation.x = -Math.PI / 2;
-      chunk.add(ground);
-
-      // right streets
-      {
-        const streetGeometry = new PlaneGeometry(streetWidth, cellSize);
-        const streetMaterial = new MeshBasicMaterial({
-          color: streetColor,
-        });
-        const street = new Mesh(streetGeometry, streetMaterial);
-        //street.receiveShadow = true;
-        street.position.set(
-          (x - gridSize / 2) * cellSize + chunkX * chunkSize,
-          -0.09,
-          (z - gridSize / 2) * cellSize + chunkZ * chunkSize + cellSize / 2
-        );
-        street.rotation.x = -Math.PI / 2;
-
-        scene.add(street);
-      }
-
-      // bottom streets
-      {
-        const streetGeometry = new PlaneGeometry(cellSize, streetWidth);
-        const streetMaterial = new MeshBasicMaterial({
-          color: streetColor,
-        });
-        const street = new Mesh(streetGeometry, streetMaterial);
-        //street.receiveShadow = true;
-
-        street.position.set(
-          (x - gridSize / 2) * cellSize + chunkX * chunkSize + cellSize / 2 - streetWidth / 2 * chunkX,
-          -0.089,
-          (z - gridSize / 2) * cellSize + chunkZ * chunkSize - streetWidth / 2 * chunkZ
-        );
-        street.rotation.x = -Math.PI / 2;
-
-        chunk.add(street);
-      }
-
-      const numBuildings = Math.floor(Math.random() * 4) + 1;
-      // generate positions of each corner of the cell
-      let cornerPositions = [
-        {
-          x: (x - gridSize / 2) * cellSize + cellSize / 4 - streetWidth / 2 * chunkX,
-          z: (z - gridSize / 2) * cellSize + streetWidth * 2 - streetWidth / 2 * chunkZ,
-        }, //ur
-        {
-          x: (x - gridSize / 2) * cellSize + cellSize / 4  - streetWidth / 2 * chunkX,
-          z: (z - gridSize / 2) * cellSize + cellSize - streetWidth * 2 - streetWidth / 2 * chunkZ,
-        }, //ul
-        {
-          x: (x - gridSize / 2) * cellSize + cellSize - streetWidth * 2 - streetWidth / 2 * chunkX,
-          z: (z - gridSize / 2) * cellSize + streetWidth * 2 - streetWidth / 2 * chunkZ,
-        }, //lr
-        {
-          x: (x - gridSize / 2) * cellSize + cellSize - streetWidth * 2 - streetWidth / 2 * chunkX,
-          z: (z - gridSize / 2) * cellSize + cellSize - streetWidth * 2 - streetWidth / 2 * chunkZ,
-        }, //ll
-      ]
-
-      for (let i = 0; i < numBuildings; i++) {
-        const building =
-          loadedObjects[
-            Math.floor(Math.random() * loadedObjects.length)
-          ].clone();
-
-        let cornerPosition;
-        if (numBuildings !== 4) {
-          const idx = Math.floor(
-            Math.random() * cornerPositions.length
-          );
-          cornerPosition = cornerPositions.splice(idx, 1)[0];
-        } else {
-          cornerPosition = cornerPositions[i];
-        }
-        building.position.set(
-          chunkX * chunkSize + cornerPosition.x,
-          building.position.y,
-          chunkZ * chunkSize + cornerPosition.z
-        );
-        //const rotationY = Math.random() * Math.PI * 2;
-        //building.rotation.set(0, rotationY, 0);
-
-        building.scale.set(0.01, 0.01, 0.01);
-        building.frustumCulled = true; // should be default
-        //building.castShadow = true;
-        chunk.add(building);
-      }
-    }
-  }
-
-  console.log(`Adding chunk ${chunkKey}`);
-
-  visibleChunks.add(chunkKey);
-  chunk.name = `chunk-${chunkKey}`;
-  scene.add(chunk);
-}
-
-function removeChunk(chunkX: number, chunkZ: number) {
-  const chunkKey = `${chunkX},${chunkZ}`;
-
-  console.log(`Removing chunk ${chunkKey}`);
-  const chunk = scene.getObjectByName(`chunk-${chunkKey}`);
-
-  if (chunk) {
-    scene.remove(chunk);
-    visibleChunks.delete(`${chunkKey}`);
-
-    chunkCache.set(chunkKey, chunk);
-    if (chunkCache.size > 10) {
-      const oldestChunkKey = chunkCache.keys().next().value;
-      chunkCache.delete(oldestChunkKey);
-    }
-  }
-}
-
-function updateVisibleChunks(cameraPosition: Vector3) {
-  const cameraChunkX = Math.floor(cameraPosition.x / chunkSize);
-  const cameraChunkZ = Math.floor(cameraPosition.z / chunkSize);
-  let sceneSizeChanged = false;
-
-  const visibleChunkRadius = 1;
-  for (let x = cameraChunkX - visibleChunkRadius; x <= cameraChunkX + visibleChunkRadius; x++) {
-    for (let z = cameraChunkZ - visibleChunkRadius; z <= cameraChunkZ + visibleChunkRadius; z++) {
-      if (!visibleChunks.has(`${x},${z}`)) {
-        generateChunk(x, z);
-        sceneSizeChanged = true;
-      }
-    }
-  }
-
-  for (const chunk of visibleChunks) {
-    const [x, z] = (chunk as string).split(",").map(Number);
-    if (
-      x < cameraChunkX - visibleChunkRadius ||
-      x > cameraChunkX + visibleChunkRadius ||
-      z < cameraChunkZ - visibleChunkRadius ||
-      z > cameraChunkZ + visibleChunkRadius
-    ) {
-      chunksToRemove.add(`${x},${z}`);
-    }
-  }
-
-  // remove batch of no longer visible chunks
-  if (chunksToRemove.size >= 8) {
-    for (const chunk of chunksToRemove) {
-      const [chunkX, chunkZ] = (chunk as string).split(',').map(Number);
-      removeChunk(chunkX, chunkZ);
-      visibleChunks.delete(chunk);
-      sceneSizeChanged = true;
-    }
-    chunksToRemove.clear();
-  }
-
-  if (sceneSizeChanged) {
-    scene.dispatchEvent({type: 'change'});
-  }
-}
-
-function updateCity(cameraPosition: Vector3) {
-  updateVisibleChunks(cameraPosition);
-}
-
 function animate() {
   updateRequested = false;
 
@@ -500,3 +498,5 @@ function animate() {
 
   cameraControls.update();
 }
+
+await init();

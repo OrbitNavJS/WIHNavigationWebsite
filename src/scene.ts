@@ -17,6 +17,7 @@ import {
   HemisphereLight,
   Ray,
   Plane,
+  TextureLoader,
 } from "three";
 import { WorldInHandControls } from "@world-in-hand-controls/threejs-world-in-hand";
 import Stats from "three/examples/jsm/libs/stats.module";
@@ -185,6 +186,15 @@ function generateChunk(chunkX: number, chunkZ: number) {
         building.scale.set(0.01, 0.01, 0.01);
         building.frustumCulled = true; // should be default
         chunk.add(building);
+
+        // add fake shadow to building
+        const shadowTexture = new TextureLoader().load('./textures/roundshadow.png');
+        const shadowMaterial = new MeshBasicMaterial({ map: shadowTexture, transparent: true, opacity:0.35, depthWrite: false});
+        const shadowGeometry = new PlaneGeometry(10, 10);
+        const shadowPlane = new Mesh(shadowGeometry, shadowMaterial);
+        shadowPlane.position.copy(building.position);
+        shadowPlane.rotation.x = -Math.PI / 2;
+        chunk.add(shadowPlane);
       }
     }
   }
@@ -245,7 +255,7 @@ function updateVisibleChunks(cameraPosition: Vector3, camera: PerspectiveCamera)
   }
 
   // remove batch of no longer visible chunks
-  if (chunksToRemove.size >= 8) {
+  if (chunksToRemove.size >= 12) {
     for (const chunk of chunksToRemove) {
       const [chunkX, chunkZ] = (chunk as string).split(',').map(Number);
       removeChunk(chunkX, chunkZ);

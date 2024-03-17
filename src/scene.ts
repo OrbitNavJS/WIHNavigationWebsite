@@ -87,7 +87,6 @@ function generateChunk(chunkX: number, chunkZ: number) {
       const groundColor =
           groundColors[Math.floor(Math.random() * groundColors.length)];
 
-
       const groundGeometry = new PlaneGeometry(
           cellSize - streetWidth / 2,
           cellSize - streetWidth / 2
@@ -96,7 +95,6 @@ function generateChunk(chunkX: number, chunkZ: number) {
         color: groundColor,
       });
       const ground = new Mesh(groundGeometry, groundMaterial);
-      //ground.receiveShadow = true;
       ground.position.set(
           (x - gridSize / 2) * cellSize + chunkX * chunkSize + cellSize / 2 - streetWidth / 2 * chunkX,
           -0.1,
@@ -112,7 +110,6 @@ function generateChunk(chunkX: number, chunkZ: number) {
           color: streetColor,
         });
         const street = new Mesh(streetGeometry, streetMaterial);
-        //street.receiveShadow = true;
         street.position.set(
             (x - gridSize / 2) * cellSize + chunkX * chunkSize,
             -0.09,
@@ -130,7 +127,6 @@ function generateChunk(chunkX: number, chunkZ: number) {
           color: streetColor,
         });
         const street = new Mesh(streetGeometry, streetMaterial);
-        //street.receiveShadow = true;
 
         street.position.set(
             (x - gridSize / 2) * cellSize + chunkX * chunkSize + cellSize / 2 - streetWidth / 2 * chunkX,
@@ -188,7 +184,6 @@ function generateChunk(chunkX: number, chunkZ: number) {
 
         building.scale.set(0.01, 0.01, 0.01);
         building.frustumCulled = true; // should be default
-        //building.castShadow = true;
         chunk.add(building);
       }
     }
@@ -284,8 +279,6 @@ async function init() {
       logarithmicDepthBuffer: false,
     });
     renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = PCFSoftShadowMap;
 
     window.addEventListener("resize", () => {
       resizeRequested = true;
@@ -303,16 +296,7 @@ async function init() {
     // add directional light
     directionalLight = new DirectionalLight(0xf5f5f5, 1);
     directionalLight.position.set(15, 15, 0);
-    /*directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.width = 1024; // Adjust shadow map size as needed
-    directionalLight.shadow.mapSize.height = 1024;
-    directionalLight.shadow.camera.near = 0.5; // Adjust shadow camera parameters as needed
-    directionalLight.shadow.camera.far = 500;*/
 
-    // sky color ground color intensity 
-    /*hemiLight = new HemisphereLight( 0x0000ff, 0x00ff00, 0.6 );
-    hemiLight.position.set(15, 15, 0);
-    scene.add(hemiLight);*/
     scene.add(directionalLight);
   }
 

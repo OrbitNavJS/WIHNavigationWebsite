@@ -18,6 +18,8 @@ import {
   Ray,
   Plane,
   TextureLoader,
+  MeshStandardMaterial,
+  RepeatWrapping,
 } from "three";
 import { WorldInHandControls } from "@world-in-hand-controls/threejs-world-in-hand";
 import Stats from "three/examples/jsm/libs/stats.module";
@@ -60,6 +62,49 @@ const visibleChunks = new Set();
 const chunksToRemove = new Set();
 const chunkCache = new Map();
 
+const cellSize = 15;
+const streetWidth = 2;
+
+function loadTexture(path: string): THREE.Texture {
+  const textureLoader = new TextureLoader();
+  const texture = textureLoader.load(path);
+  texture.wrapS = RepeatWrapping;
+  texture.wrapT = RepeatWrapping;
+  texture.repeat.set(10, 10);
+  return texture;
+}
+
+const grassColor = loadTexture('./textures/Grass001_1K-PNG_Color.png');
+const grassDisplacement = loadTexture('./textures/Grass001_1K-PNG_Displacement.png');
+const stoneColor = loadTexture('./textures/concrete.png');
+const redColor = loadTexture('./textures/redstone.png');
+
+const asphaltColor = loadTexture('./textures/asphalt.jpg');
+const asphaltColor2 = asphaltColor.clone();
+asphaltColor.repeat.set(1, 10);
+asphaltColor2.repeat.set(10, 1);
+
+const textureLoader = new TextureLoader();
+const shadowTexture = textureLoader.load('./textures/roundshadow.png');
+
+
+const groundGeometry = new PlaneGeometry(
+  cellSize - streetWidth / 2,
+  cellSize - streetWidth / 2
+);
+
+const stoneMaterial = new MeshStandardMaterial({
+map: stoneColor
+});
+const grassMaterial = new MeshStandardMaterial({
+map: grassColor,
+displacementMap: grassDisplacement,
+displacementScale: 0.1,
+});
+const redMaterial = new MeshStandardMaterial({
+map: redColor
+});
+
 function generateChunk(chunkX: number, chunkZ: number) {
   const chunkKey = `${chunkX},${chunkZ}`;
 
@@ -72,29 +117,16 @@ function generateChunk(chunkX: number, chunkZ: number) {
     return;
   }
 
-
   const chunk = new Group();
-
   const gridSize = 10;
-  const cellSize = 15;
-  const streetWidth = 2;
   chunk.position.set(chunkX, 0, chunkZ);
 
-  const groundColors = [0x00ff00, 0xb3b3b3, 0x8b4513]; // Green, Grey, Brown
-  const streetColor = 0x808080; // Grey
 
   for (let x = 0; x < gridSize; x++) {
     for (let z = 0; z < gridSize; z++) {
-      const groundColor =
-          groundColors[Math.floor(Math.random() * groundColors.length)];
+      // pick random groundMaterial from grass, stone, red
+      const groundMaterial = Math.random() < 0.5 ? grassMaterial : Math.random() < 0.5 ? stoneMaterial : redMaterial;
 
-      const groundGeometry = new PlaneGeometry(
-          cellSize - streetWidth / 2,
-          cellSize - streetWidth / 2
-      );
-      const groundMaterial = new MeshBasicMaterial({
-        color: groundColor,
-      });
       const ground = new Mesh(groundGeometry, groundMaterial);
       ground.position.set(
           (x - gridSize / 2) * cellSize + chunkX * chunkSize + cellSize / 2 - streetWidth / 2 * chunkX,
@@ -108,7 +140,7 @@ function generateChunk(chunkX: number, chunkZ: number) {
       {
         const streetGeometry = new PlaneGeometry(streetWidth, cellSize);
         const streetMaterial = new MeshBasicMaterial({
-          color: streetColor,
+          map: asphaltColor,
         });
         const street = new Mesh(streetGeometry, streetMaterial);
         street.position.set(
@@ -125,7 +157,7 @@ function generateChunk(chunkX: number, chunkZ: number) {
       {
         const streetGeometry = new PlaneGeometry(cellSize, streetWidth);
         const streetMaterial = new MeshBasicMaterial({
-          color: streetColor,
+          map: asphaltColor2,
         });
         const street = new Mesh(streetGeometry, streetMaterial);
 
@@ -188,8 +220,7 @@ function generateChunk(chunkX: number, chunkZ: number) {
         chunk.add(building);
 
         // add fake shadow to building
-        const shadowTexture = new TextureLoader().load('./textures/roundshadow.png');
-        const shadowMaterial = new MeshBasicMaterial({ map: shadowTexture, transparent: true, opacity:0.35, depthWrite: false});
+        const shadowMaterial = new MeshBasicMaterial({ map: shadowTexture, transparent: true, opacity:0.3, depthWrite: false});
         const shadowGeometry = new PlaneGeometry(10, 10);
         const shadowPlane = new Mesh(shadowGeometry, shadowMaterial);
         shadowPlane.position.copy(building.position);
@@ -300,7 +331,7 @@ async function init() {
 
   // ===== 💡 LIGHTS =====
   {
-    ambientLight = new AmbientLight(0xffffff, 1.5);
+    ambientLight = new AmbientLight(0xfcf4cc, 1.5);
     scene.add(ambientLight);
 
     // add directional light

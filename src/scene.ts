@@ -58,10 +58,6 @@ function requestUpdate() {
 }
 
 const chunkSize = 150;
-const visibleChunks = new Set();
-const chunksToRemove = new Set();
-const chunkCache = new Map();
-
 const cellSize = 15;
 const streetWidth = 2;
 
@@ -108,19 +104,9 @@ map: redColor
 function generateChunk(chunkX: number, chunkZ: number) {
   const chunkKey = `${chunkX},${chunkZ}`;
 
-  // check if chunk is cached
-  if (chunkCache.has(chunkKey)) {
-    const chunk = chunkCache.get(chunkKey);
-    visibleChunks.add(chunkKey);
-    scene.add(chunk);
-    chunkCache.delete(chunkKey);
-    return;
-  }
-
   const chunk = new Group();
   const gridSize = 10;
   chunk.position.set(chunkX, 0, chunkZ);
-
 
   for (let x = 0; x < gridSize; x++) {
     for (let z = 0; z < gridSize; z++) {
@@ -212,9 +198,6 @@ function generateChunk(chunkX: number, chunkZ: number) {
             building.position.y,
             chunkZ * chunkSize + cornerPosition.z
         );
-        //const rotationY = Math.random() * Math.PI * 2;
-        //building.rotation.set(0, rotationY, 0);
-
         building.scale.set(0.01, 0.01, 0.01);
         building.frustumCulled = true; // should be default
         chunk.add(building);
@@ -230,79 +213,18 @@ function generateChunk(chunkX: number, chunkZ: number) {
     }
   }
 
-  console.log(`Adding chunk ${chunkKey}`);
-
-  visibleChunks.add(chunkKey);
   chunk.name = `chunk-${chunkKey}`;
   scene.add(chunk);
 }
 
-function removeChunk(chunkX: number, chunkZ: number) {
-  const chunkKey = `${chunkX},${chunkZ}`;
-
-  console.log(`Removing chunk ${chunkKey}`);
-  const chunk = scene.getObjectByName(`chunk-${chunkKey}`);
-
-  if (chunk) {
-    scene.remove(chunk);
-    visibleChunks.delete(`${chunkKey}`);
-
-    chunkCache.set(chunkKey, chunk);
-    if (chunkCache.size > 10) {
-      const oldestChunkKey = chunkCache.keys().next().value;
-      chunkCache.delete(oldestChunkKey);
-    }
-  }
-}
-
-function updateVisibleChunks(cameraPosition: Vector3, camera: PerspectiveCamera) {
-  let screenCenter= new Vector3();
-  new Ray(cameraPosition, camera.getWorldDirection(new Vector3())).intersectPlane(new Plane(new Vector3(0,1,0), -1), screenCenter)
-
-  const chunkX = Math.floor(screenCenter.x / chunkSize);
-  const chunkZ = Math.floor(screenCenter.z / chunkSize);
-  let sceneSizeChanged = false;
-
-  const visibleChunkRadius = 1;
-  for (let x = chunkX - visibleChunkRadius; x <= chunkX + visibleChunkRadius; x++) {
-    for (let z = chunkZ - visibleChunkRadius; z <= chunkZ + visibleChunkRadius; z++) {
-      if (!visibleChunks.has(`${x},${z}`)) {
-        generateChunk(x, z);
-        sceneSizeChanged = true;
-      }
+// function to generate a grid of chunks
+function generateCity(){
+  for (let x = -1; x < 2; x++) {
+    for (let z = -1; z < 2; z++) {
+      generateChunk(x, z);
     }
   }
 
-  for (const chunk of visibleChunks) {
-    const [x, z] = (chunk as string).split(",").map(Number);
-    if (
-        x < chunkX - visibleChunkRadius ||
-        x > chunkX + visibleChunkRadius ||
-        z < chunkZ - visibleChunkRadius ||
-        z > chunkZ + visibleChunkRadius
-    ) {
-      chunksToRemove.add(`${x},${z}`);
-    }
-  }
-
-  // remove batch of no longer visible chunks
-  if (chunksToRemove.size >= 12) {
-    for (const chunk of chunksToRemove) {
-      const [chunkX, chunkZ] = (chunk as string).split(',').map(Number);
-      removeChunk(chunkX, chunkZ);
-      visibleChunks.delete(chunk);
-      sceneSizeChanged = true;
-    }
-    chunksToRemove.clear();
-  }
-
-  if (sceneSizeChanged) {
-    scene.dispatchEvent({type: 'change'});
-  }
-}
-
-function updateCity(cameraPosition: Vector3, camera: PerspectiveCamera) {
-  updateVisibleChunks(cameraPosition, camera);
 }
 
 async function init() {
@@ -387,7 +309,7 @@ async function init() {
         }
         console.log("All objects loaded");
         objectsLoaded = true;
-        updateCity(camera.position, camera);
+        generateCity(camera.position, camera);
         requestUpdate();
       } catch (error) {
         console.error("Error loading objects:", error);
@@ -524,7 +446,6 @@ function animate() {
     renderer.render(scene, camera);
   }
 
-  if (objectsLoaded) updateCity(camera.position, camera);
 
   cameraControls.update();
 }

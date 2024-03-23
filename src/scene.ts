@@ -14,7 +14,6 @@ import {
   RepeatWrapping,
 } from "three";
 import { WorldInHandControls } from "@world-in-hand-controls/threejs-world-in-hand";
-import Stats from "three/examples/jsm/libs/stats.module";
 import { toggleFullScreen } from "./helpers/fullscreen";
 import "./style.css";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
@@ -30,11 +29,9 @@ let ambientLight: AmbientLight;
 let directionalLight: DirectionalLight;
 let camera: PerspectiveCamera;
 let cameraControls: WorldInHandControls | OrbitControls;
-let stats: Stats;
 
 let updateRequested = false;
 let resizeRequested = true;
-let objectsLoaded = false;
 
 const loadedObjects: THREE.Object3D[] = [];
 
@@ -328,7 +325,6 @@ async function init() {
           loadedObjects.push(object);
         }
         console.log("All objects loaded");
-        objectsLoaded = true;
         generateCity();
         requestUpdate();
       } catch (error) {
@@ -360,19 +356,10 @@ async function init() {
       }
     });
   }
-
-
-  // ===== 📈 STATS & CLOCK =====
-  {
-    stats = new Stats();
-    document.body.appendChild(stats.dom);
-  }
 }
 
 function animate() {
   updateRequested = false;
-
-  stats.update();
 
   if (resizeRequested) {
     const canvas = renderer.domElement;

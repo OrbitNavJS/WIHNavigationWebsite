@@ -6,7 +6,12 @@
   <link rel="icon" type="image/svg+xml" href="/threejs-icon.svg" />
   <link rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/panda-syntax-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+    <script>hljs.highlightAll();</script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>World-In-Hand Navigation</title>
 </head>
 
@@ -134,12 +139,72 @@
 
     <h3>Using our navigation</h3>
     <p>
-      Using our World-In-Hand navigation in your Three.js project is straightforward and requires only a few extra steps
+      Using our World-In-Hand Navigation in your Three.js project is straightforward and requires only a few extra steps
       compared to
       the standard OrbitControls.
       In general, we require you to use a WebGL2Renderer and render your scene into our custom
       WorldInHandControls.navigationRenderTarget
-      to calculate the depth values for the mouse position.
+      to calculate the depth values for the mouse position:</p>
+      <div id="code-exl">
+      <h4>World-In-Hand Controls Usage</h4>
+      <h4>OrbitControls Usage</h4>
+      </div>
+      <div id="code-exl">
+      <pre><code class="language-typescript">
+// Last parameter is the amount of MSAA samples to use for the exposed render target
+const controls = new WorldInHandControls(perspectiveCamera, renderer.domElement, renderer, scene, 4);
+
+// When scene changes its size
+scene.dispatchEvent({type: 'change'});
+
+// If rendering on demand, listen to change events
+controls.addEventListener('change', render);
+
+// If the renderer.domElement was resized
+scene.dispatchEvent({type: 'resize'});
+
+// If manually changing camera, call this afterwards
+controls.reloadCamera();
+
+function render() {
+    // Render into the exposed render target
+    renderer.setRenderTarget(controls.navigationRenderTarget);
+    renderer.render(scene, perspectiveCamera);
+    
+    // Tell the controls a render has taken place and
+    // by default copy the render target to the canvas
+    controls.update();
+}
+        </code></pre>
+      <pre><code class="language-typescript">
+        
+const controls = new OrbitControls(camera, renderer.domElement);
+
+
+
+
+// If rendering on demand, listen to change events
+controls.addEventListener('change', render);
+
+
+
+
+// If manually changing camera, call this afterwards
+controls.update();
+
+function render() {
+    // Render into the exposed render target
+    renderer.setRenderTarget(null);
+    renderer.render(scene, perspectiveCamera);
+    
+    
+
+
+}
+        </code></pre>
+      </div>
+
+    <p>
       We have published a package on <a
         href="https://www.npmjs.com/package/@world-in-hand-controls/threejs-world-in-hand">npm</a>
       that you can install and use in your project. As an alternative, you can also download the source code
@@ -196,7 +261,6 @@
           href="https://public.websites.umich.edu/~sjul/papers/chi03_leylines.pdf">https://public.websites.umich.edu/~sjul/papers/chi03_leylines.pdf</a>
       </li>
     </ol>
-
   </div>
 
   <script type="module" src="/src/scene.ts"></script>

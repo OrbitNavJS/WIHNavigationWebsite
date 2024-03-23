@@ -140,3 +140,21 @@ h2 {
 #code-exl h4 {
   width: 49%;
 }
+
+#loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; /* Ensure it's above the canvas */
+}
+
+#loading-overlay p {
+  color: white;
+  font-size: 24px;
+}

@@ -325,7 +325,10 @@ async function init() {
           loadedObjects.push(object);
         }
         console.log("All objects loaded");
-        generateCity();
+        let loadingOverlay = document.getElementById('loading-overlay');
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'none';
+        }        generateCity();
         requestUpdate();
       } catch (error) {
         console.error("Error loading objects:", error);

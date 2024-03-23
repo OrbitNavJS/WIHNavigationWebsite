@@ -45,6 +45,7 @@
       This allows the user to grab a point or an object and move it around (panning),
       rotate the scene around that point (rotating) or the point in the center of the screen, and zoom in and out to the point.
       Try it in our demo above or under the following link: <a href="#">linklinklink</a>!
+      You can use your mouse or interact through touch on mobile devices.
     </p>
     <h3>How it works</h3>
     <p>
@@ -53,6 +54,59 @@
       Three.js's Vector3.unproject(camera) method allows us to transform the NDC into world coordinates.
       With these world coordinates we can then calculate precise movement vectors that we apply to the camera.      
     </p>
+    <h3>Enhancing the Navigation</h3>
+    <p>
+      In addition to the core navigation features, we have implemented several basic enhancements to further improve the user experience.
+      These efforts are based on the idea of resilient or constrained navigation:
+      We aim to avoid potentially disorienting or confusing camera movements, such as flipping the scene upside down or moving the camera too far
+      away, by constraining the camera's movement within certain limits.
+      Our enhancements include:
+      <ul>
+        <li>Limiting the cameras distance from the scene</li>
+        <li>Preventing the camera from flipping upside down</li>
+        <li>Clamping the possible scene depth for the mouse</li>
+        <li>Adjusting the camera's movement speed when zooming based on the scene's depth</li>
+        <li>Giving the option to prohibit rotation below the ground plane</li>
+        <li>Allowing the user to reset the camera to its initial position</li>
+      </ul>
+
+      Additionally, we have implemented a World-In-Hand-Controls Visualiser class. This feature allows developers using our navigation to 
+      visualise the constraints listed as well as other helpful information such as the mouse position in the scene or the axes used for rotation.
+      We believe this will assist developers in better understanding the navigation, adapting it to their needs, 
+      and identifying and addressing potential future issues.
+    </p>
+
+    <h3>Using our navigation</h3>
+    <p>
+      Using our World-In-Hand navigation in your Three.js project is straightforward and requires only a few extra steps compared to 
+      the standard OrbitControls.
+      In general, we require you to use a WebGL2Renderer and render your scene into our custom WorldInHandControls.navigationRenderTarget
+      to calculate the depth values for the mouse position.
+      We have published a package on npm that you can install and use in your project. As an alternative, you can also download the source code
+      from our GitHub repository. You can find further information on how to use our navigation under both links.
+    </p>
+
+    <h2>Summary & Future Work</h2>
+    <p>
+      In summary, our World-In-Hand navigation approach offers a more intuitive and immersive way to navigate virtual environments in Three.js.
+      By allowing users to interact with the scene as if it were a tangible object in their hands, we aim to enhance the sense of presence and control,
+      making navigation more intuitive, robust, and user-friendly.
+      Our implementation includes core navigation features such as panning, rotating, and zooming, as well as several enhancements to improve the user experience.
+      We have also developed a World-In-Hand-Controls Visualiser class to help developers better understand and adapt the navigation to their needs.
+    </p>
+
+    <p>
+      In the future, our approach could be further refined and expanded by adding new features and capabilities, especially 
+      regarding the resilience.
+      Some potential areas for improvement include:
+      <ul>
+        <li>Implementing advanced constraints for camera movement when rotating</li>
+        <li>Detecting and avoiding collisions between scene and camera</li>
+      </ul>
+      We also plan to create a pull request for Three.js to integrate our navigation into the examples similarly to the OrbitControls.
+    </p>
+
+    <h2>Attribution</h2>
 
     <script type="module" src="/src/scene.ts"></script>
   </body>

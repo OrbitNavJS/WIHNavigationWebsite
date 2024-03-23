@@ -21,6 +21,7 @@ body {
 body,
 html {
   height: 100%;
+  scroll-behavior: smooth;
 }
 
 canvas {
@@ -36,6 +37,29 @@ canvas {
     rgba(61, 79, 94, 0.885) 40%,
     rgb(17, 19, 23)
   );
+}
+
+.read-more-btn {
+  background-color: rgb(17, 19, 23);
+  color: white;
+  border: none;
+  padding: 15px 20px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  position: absolute;
+  transform: translateY(-150%);
+}
+
+.read-more-btn:hover {
+  background-color: rgb(38, 50, 58);
+}
+
+.read-more-btn span:first-of-type {
+  margin-right: 10px;
 }
 
 h1 {

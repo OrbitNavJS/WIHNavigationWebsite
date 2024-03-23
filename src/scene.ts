@@ -27,6 +27,7 @@ import { toggleFullScreen } from "./helpers/fullscreen";
 import "./style.css";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
+import { color } from "csx";
 
 const CANVAS_ID = "scene";
 
@@ -75,8 +76,9 @@ const grassDisplacement = loadTexture('./textures/Grass001_1K-PNG_Displacement.p
 const stoneColor = loadTexture('./textures/concrete.png');
 const redColor = loadTexture('./textures/redstone.png');
 
-const asphaltColor = loadTexture('./textures/asphalt.jpg');
-const asphaltColor2 = asphaltColor.clone();
+const asphaltBasic = loadTexture('./textures/asphalt.jpg');
+const asphaltColor = asphaltBasic.clone();
+const asphaltColor2 = asphaltBasic.clone();
 asphaltColor.repeat.set(1, 10);
 asphaltColor2.repeat.set(10, 1);
 
@@ -225,6 +227,47 @@ function generateCity(){
     }
   }
 
+  // add axis helper
+  axesHelper = new AxesHelper(4);
+  scene.add(axesHelper);
+
+  // add a long street on left and bottom edge
+  {
+    const streetGeometry = new PlaneGeometry(streetWidth, chunkSize*3 + streetWidth);
+    const colorMap = asphaltBasic.clone();
+    colorMap.repeat.set(1, 100);
+    const streetMaterial = new MeshBasicMaterial({
+      map: colorMap,
+    });
+    const street = new Mesh(streetGeometry, streetMaterial);
+    street.position.set(
+        chunkSize*3/2,
+        -0.09,
+        0
+    );
+    street.rotation.x = -Math.PI / 2;
+
+    scene.add(street);
+  }
+
+  {
+    const streetGeometry = new PlaneGeometry(chunkSize*3 + streetWidth, streetWidth);
+    const colorMap = asphaltBasic.clone();
+    colorMap.repeat.set(100, 1);
+    const streetMaterial = new MeshBasicMaterial({
+      map: colorMap,
+    });;
+    const street = new Mesh(streetGeometry, streetMaterial);
+    street.position.set(
+        0,
+        -0.089,
+        chunkSize *3/2
+    );
+    street.rotation.x = -Math.PI / 2;
+
+    scene.add(street);
+  }
+
 }
 
 async function init() {
@@ -277,12 +320,6 @@ async function init() {
 
   // ===== 📦 OBJECTS =====
   {
-    // add gridhelper
-    /*const size = 1500;
-    const divisions = 500;
-    const gridHelper = new GridHelper(size, divisions);
-    scene.add(gridHelper);*/
-
     function loadOBJ(url: string): Promise<THREE.Object3D> {
       return new Promise((resolve, reject) => {
         const loader = new OBJLoader();

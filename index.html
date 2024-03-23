@@ -26,6 +26,7 @@
       we experience virtual environments through the lens of a virtual camera. While users may feel as though they are directly 
       manipulating the scene, it is, in fact, the camera that is being moved. This can sometimes lead to a disconnect, 
       as the scene's spatial information is not always directly incorporated into the user's interaction.
+      <sup>[<a href="#ref1">1</a>, <a href="#ref2">2</a>]</sup>
     </p>
     <p>
       The "World-In-Hand" navigation approach aims to bridge this gap by providing users with a more intuitive and immersive navigation experience. 
@@ -40,7 +41,7 @@
       with the latter being the most commonly used. These controls are available as add-ons and can be easily integrated into any Three.js project.
       Impartial to the scene, they respond to user input and adjust the camera accordingly.
       Like most navigation techniques, OrbitControls offer three primary modes of interaction: 
-      translation, rotation, and zoom (techninally a dolly).
+      translation, rotation, and zoom (techninally a dolly) <sup>[<a href="#ref1">1</a>, <a href="#ref2">2</a>]</sup>.
       However, these operations are focused on one predefined target point in the scene, limiting the flexibility to interact with the scene as a whole.
     </p>
     <h2>Our Approach</h2>
@@ -63,7 +64,8 @@
       In addition to the core navigation features, we have implemented several basic enhancements to further improve the user experience.
       These efforts are based on the idea of resilient or constrained navigation:
       We aim to avoid potentially disorienting or confusing camera movements, such as flipping the scene upside down or moving the camera too far
-      away, by constraining the camera's movement within certain limits.
+      away, by constraining the camera's movement within certain limits. <sup>[<a href="#ref3">3</a>, <a href="#ref4">4</a>, <a href="#ref5">5</a>]</sup>
+      <br>
       Our enhancements include:
       <ul>
         <li>Limiting the cameras distance from the scene</li>
@@ -114,6 +116,16 @@
     <h2>Attribution</h2>
     <p>The building models in the demo scene are based on <a href="https://sketchfab.com/3d-models/low-poly-buildings-979efb05b9e3442285482252903e36dd">"Low Poly Buildings"</a>
       by <a href="https://sketchfab.com/Irfn_93">Irfn_93</a> licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY-4.0</a></p>
+
+    <h3>References</h3>
+    <ol>
+        <li id="ref1">Jankowski J, Hachet M. Advances in Interaction with 3D Environments. Computer Graphics Forum. 2014;34(1):152-190. doi:<a href="https://doi.org/10.1111/cgf.12466">https://doi.org/10.1111/cgf.12466</a></li>
+        <li id="ref2">Wagner F. Concept and Implementation of Navigation Techniques for Softwaremaps with GPU-based Geometry Creation. Potsdam: University of Potsdam; 2016</li>
+        <li id="ref3">Buchholz H, Bohnet J, J. Doellner. Smart and Physically-Based Navigation in 3D Geovirtual Environments. Ninth International Conference on Information Visualisation (IV'05). Published online October 11, 2006. doi:<a href="https://doi.org/10.1109/iv.2005.117">https://doi.org/10.1109/iv.2005.117</a></li>
+        <li id="ref4">Hildebrandt D, Timm R. An assisting, constrained 3D navigation technique for multiscale virtual 3D city models. GeoInformatica. 2013;18(3):537-567. doi:<a href="https://doi.org/10.1007/s10707-013-0189-8">https://doi.org/10.1007/s10707-013-0189-8</a></li>
+        <li id="ref5">Jul S. “This Is a Lot Easier!”: Constrained Movement Speeds Navigation. Accessed March 16, 2024. <a href="https://public.websites.umich.edu/~sjul/papers/chi03_leylines.pdf">https://public.websites.umich.edu/~sjul/papers/chi03_leylines.pdf</a></li>
+      </ol>
+
     </div>
 
     <script type="module" src="/src/scene.ts"></script>

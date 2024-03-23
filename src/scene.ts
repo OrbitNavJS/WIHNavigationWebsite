@@ -1,9 +1,5 @@
-import GUI from "lil-gui";
 import {
   AmbientLight,
-  AxesHelper,
-  DirectionalLightHelper,
-  PCFSoftShadowMap,
   PerspectiveCamera,
   Scene,
   Vector3,
@@ -12,11 +8,7 @@ import {
   PlaneGeometry,
   Mesh,
   MeshBasicMaterial,
-  GridHelper,
   Group,
-  HemisphereLight,
-  Ray,
-  Plane,
   TextureLoader,
   MeshStandardMaterial,
   RepeatWrapping,
@@ -27,7 +19,6 @@ import { toggleFullScreen } from "./helpers/fullscreen";
 import "./style.css";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
-import { color } from "csx";
 
 const CANVAS_ID = "scene";
 
@@ -37,13 +28,9 @@ let renderer: WebGLRenderer;
 let scene: Scene;
 let ambientLight: AmbientLight;
 let directionalLight: DirectionalLight;
-let directionalLightHelper: DirectionalLightHelper;
-let hemiLight: HemisphereLight;
 let camera: PerspectiveCamera;
 let cameraControls: WorldInHandControls | OrbitControls;
-let axesHelper: AxesHelper;
 let stats: Stats;
-let gui: GUI;
 
 let updateRequested = false;
 let resizeRequested = true;
@@ -227,10 +214,6 @@ function generateCity(){
     }
   }
 
-  // add axis helper
-  axesHelper = new AxesHelper(4);
-  scene.add(axesHelper);
-
   // add a long street on left and bottom edge
   {
     const streetGeometry = new PlaneGeometry(streetWidth, chunkSize*3 + streetWidth);
@@ -346,7 +329,7 @@ async function init() {
         }
         console.log("All objects loaded");
         objectsLoaded = true;
-        generateCity(camera.position, camera);
+        generateCity();
         requestUpdate();
       } catch (error) {
         console.error("Error loading objects:", error);
@@ -378,16 +361,6 @@ async function init() {
     });
   }
 
-  // ===== 🪄 HELPERS =====
-  {
-    axesHelper = new AxesHelper(4);
-    axesHelper.visible = false;
-    scene.add(axesHelper);
-
-    directionalLightHelper = new DirectionalLightHelper(directionalLight, 5);
-    directionalLightHelper.visible = false;
-    scene.add(directionalLightHelper);
-  }
 
   // ===== 📈 STATS & CLOCK =====
   {

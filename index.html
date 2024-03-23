@@ -13,8 +13,8 @@
     <h4 id="subtitle"><i>An exploration into extending the Three.js Framework</i></h4>
     <br>
     <h3>About the project</h3>
-    <p>Three.js is a popular JavaScript library used for 3D graphics and visualizations on the web.  
-      As part of the seminar "Extending the Three.js Framework," hosted by the Department of Computer Graphics Systems at Hasso-Plattner-Institute, 
+    <p><a href="https://threejs.org/">Three.js</a> is a popular JavaScript library used for 3D graphics and visualisations on the web.  
+      As part of the seminar "Extending the Three.js Framework," hosted by the Department of Computer Graphics Systems at <a href="https://hpi.de/en/index.html">Hasso-Plattner-Institute</a>, 
       our team embarked on a journey to make a different navigation approach possible. 
       The primary goal was to explore and implement features aimed at enhancing the existing navigation capabilities, 
       while also ensuring robustness and user-friendliness.</p>
@@ -34,7 +34,9 @@
     </p>
     <h3>Navigation in Three.js</h3>
     <p>
-      Three.js provides a range of navigation controls out of the box, including FlyControls, TrackballControls and OrbitControls, 
+      Three.js provides a range of navigation controls out of the box, including <a href="https://threejs.org/docs/#examples/en/controls/FlyControls">FlyControls</a>, 
+      <a href="https://threejs.org/docs/#examples/en/controls/TrackballControls">TrackballControls</a> and 
+      <a href="https://threejs.org/docs/#examples/en/controls/OrbitControls">OrbitControls</a>, 
       with the latter being the most commonly used. These controls are available as add-ons and can be easily integrated into any Three.js project.
       Impartial to the scene, they respond to user input and adjust the camera accordingly.
       Like most navigation techniques, OrbitControls offer three primary modes of interaction: 
@@ -46,14 +48,14 @@
       Our approach to World-In-Hand navigation is based on the exact mouse position projected onto the scene.
       This allows the user to grab a point or an object and move it around (panning),
       rotate the scene around that point (rotating) or the point in the center of the screen, and zoom in and out to the point.
-      Try it in our demo above or under the following link: <a href="#">linklinklink</a>!
+      Try it in our demo above or in <a href="https://orbitnavjs.github.io/ThreeJSWorldInHand/">this version</a> to compare to OrbitControls!
       You can use your mouse or interact through touch on mobile devices.
     </p>
     <h3>How it works</h3>
     <p>
       We calculate the exact mouse position by transforming the screen mouse position into normalized device coordinates (NDC)
       and reading the depth value from the depth buffer.
-      Three.js's Vector3.unproject(camera) method allows us to transform the NDC into world coordinates.
+      Three.js's <code>Vector3.unproject(camera)</code> method allows us to transform the NDC into world coordinates.
       With these world coordinates we can then calculate precise movement vectors that we apply to the camera.      
     </p>
     <h3>Enhancing the Navigation</h3>
@@ -84,8 +86,9 @@
       the standard OrbitControls.
       In general, we require you to use a WebGL2Renderer and render your scene into our custom WorldInHandControls.navigationRenderTarget
       to calculate the depth values for the mouse position.
-      We have published a package on npm that you can install and use in your project. As an alternative, you can also download the source code
-      from our GitHub repository. You can find further information on how to use our navigation under both links.
+      We have published a package on <a href="https://www.npmjs.com/package/@world-in-hand-controls/threejs-world-in-hand">npm</a> 
+      that you can install and use in your project. As an alternative, you can also download the source code
+      from our <a href="https://github.com/OrbitNavJS/ThreeJSWorldInHand">GitHub repository</a>. You can find further information on how to use our navigation under both links.
     </p>
 
     <h2>Summary & Future Work</h2>
@@ -109,6 +112,8 @@
     </p>
 
     <h2>Attribution</h2>
+    <p>The building models in the demo scene are based on <a href="https://sketchfab.com/3d-models/low-poly-buildings-979efb05b9e3442285482252903e36dd">"Low Poly Buildings"</a>
+      by <a href="https://sketchfab.com/Irfn_93">Irfn_93</a> licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY-4.0</a></p>
     </div>
 
     <script type="module" src="/src/scene.ts"></script>

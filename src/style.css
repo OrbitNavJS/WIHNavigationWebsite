@@ -42,6 +42,18 @@ canvas {
 .read-more-btn {
   background-color: rgb(17, 19, 23);
   color: white;
+  transform: translateY(-150%);
+}
+
+.read-more-btn:hover {
+  background-color: rgb(38, 50, 58);
+}
+
+.btn span:first-of-type {
+  margin-right: 10px;
+}
+
+.btn {
   border: none;
   padding: 15px 20px;
   cursor: pointer;
@@ -51,15 +63,18 @@ canvas {
   align-items: center;
   text-decoration: none;
   position: absolute;
-  transform: translateY(-150%);
+  right: 10px;
 }
 
-.read-more-btn:hover {
-  background-color: rgb(38, 50, 58);
+.demo-btn {
+  background-color: rgb(255, 255, 255);
+  color: rgb(17, 19, 23);;
+  transform: translateY(150%);
+  bottom: 0px;
 }
 
-.read-more-btn span:first-of-type {
-  margin-right: 10px;
+.demo-btn:hover {
+  background-color: rgb(178, 183, 186);
 }
 
 h1 {

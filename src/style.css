@@ -43,6 +43,7 @@ canvas {
   background-color: rgb(17, 19, 23);
   color: white;
   transform: translateY(-150%);
+  right: 10px;
 }
 
 .read-more-btn:hover {
@@ -63,7 +64,6 @@ canvas {
   align-items: center;
   text-decoration: none;
   position: absolute;
-  right: 10px;
 }
 
 .demo-btn {
@@ -71,10 +71,34 @@ canvas {
   color: rgb(17, 19, 23);;
   transform: translateY(150%);
   bottom: 0px;
+  right: 10px;
 }
 
 .demo-btn:hover {
   background-color: rgb(178, 183, 186);
+}
+
+.info-btn {
+  background-color: rgb(17, 19, 23);
+  transform: translateY(-150%);
+  border-radius: 22px;
+}
+
+.info-btn img {
+  filter: invert(100%);
+}
+
+#info-buttons {
+  position: absolute;
+  left: 10px;
+}
+
+#zoom-info {
+  left: 125px;
+}
+
+#pan-info {
+  left: 245px;
 }
 
 h1 {

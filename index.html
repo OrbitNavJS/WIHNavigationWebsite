@@ -8,8 +8,52 @@
   </head>
   <body>
     <canvas id="scene"></canvas>
-    <h2>World in Hand Navigation</h2>
-    <p>Some further info. Lorem Ipsum.</p>
+    <h1>World-In-Hand Navigation</h1>
+    <h4>An exploration into extending the Three.js Framework</h4>
+    <h3>About the project</h3>
+    <p>Three.js is a popular JavaScript library used for 3D graphics and visualizations on the web.  
+      As part of the seminar "Extending the Three.js Framework," hosted by the Department of Computer Graphics Systems at Hasso-Plattner-Institute, 
+      our team embarked on a journey to make a different navigation approach possible. 
+      The primary goal was to explore and implement features aimed at enhancing the existing navigation capabilities, 
+      while also ensuring robustness and user-friendliness.</p>
+    <h2>What is World-In-Hand Navigation?</h2>
+    <h3>Navigation in virtual environments</h3>
+    <p>
+      Navigation is a critical aspect of user interaction within virtual environments, 
+      allowing users to move around and explore the digital world effectively. In the realm of 3D graphics, 
+      we experience virtual environments through the lens of a virtual camera. While users may feel as though they are directly 
+      manipulating the scene, it is, in fact, the camera that is being moved. This can sometimes lead to a disconnect, 
+      as the scene's spatial information is not always directly incorporated into the user's interaction.
+    </p>
+    <p>
+      The "World-In-Hand" navigation approach aims to bridge this gap by providing users with a more intuitive and immersive navigation experience. 
+      By allowing users to interact with the virtual world as if it were a tangible object in their hands, this method enhances the sense of presence 
+      and control, making navigation more intuitive, robust, and user-friendly.
+    </p>
+    <h3>Navigation in Three.js</h3>
+    <p>
+      Three.js provides a range of navigation controls out of the box, including FlyControls, TrackballControls and OrbitControls, 
+      with the latter being the most commonly used. These controls are available as add-ons and can be easily integrated into any Three.js project.
+      Impartial to the scene, they respond to user input and adjust the camera accordingly.
+      Like most navigation techniques, OrbitControls offer three primary modes of interaction: 
+      translation, rotation, and zoom (techninally a dolly).
+      However, these operations are focused on one predefined target point in the scene, limiting the flexibility to interact with the scene as a whole.
+    </p>
+    <h2>Our Approach</h2>
+    <p>
+      Our approach to World-In-Hand navigation is based on the exact mouse position projected onto the scene.
+      This allows the user to grab a point or an object and move it around (panning),
+      rotate the scene around that point (rotating) or the point in the center of the screen, and zoom in and out to the point.
+      Try it in our demo above or under the following link: <a href="#">linklinklink</a>!
+    </p>
+    <h3>How it works</h3>
+    <p>
+      We calculate the exact mouse position by transforming the screen mouse position into normalized device coordinates (NDC)
+      and reading the depth value from the depth buffer.
+      Three.js's Vector3.unproject(camera) method allows us to transform the NDC into world coordinates.
+      With these world coordinates we can then calculate precise movement vectors that we apply to the camera.      
+    </p>
+
     <script type="module" src="/src/scene.ts"></script>
   </body>
 </html>

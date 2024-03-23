@@ -42,3 +42,21 @@ h1 {
   font-size: 3.2em;
   line-height: 1.1;
 }
+
+h2 {
+  padding-top: 30px;
+  text-decoration: underline;
+
+}
+
+#headline {
+  margin-bottom: 10px;
+}
+
+#subtitle {
+  margin-top: 0px;
+}
+
+#content {
+  padding: 30px;
+}

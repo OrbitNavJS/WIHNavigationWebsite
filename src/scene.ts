@@ -92,14 +92,34 @@ function generateChunk(chunkX: number, chunkZ: number) {
 
   const chunk = new Group();
   const gridSize = 10;
+  const textures = [grassMaterial, stoneMaterial, redMaterial];
+  const textureCounts: { [key: string]: number } = {};
+
   chunk.position.set(chunkX, 0, chunkZ);
 
   for (let x = 0; x < gridSize; x++) {
     for (let z = 0; z < gridSize; z++) {
-      // pick random groundMaterial from grass, stone, red
-      const groundMaterial = Math.random() < 0.5 ? grassMaterial : Math.random() < 0.5 ? stoneMaterial : redMaterial;
+      // Calculate neighboring squares' texture frequencies
+      const neighboringTextures: { [key: string]: number } = {};
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dz = -1; dz <= 1; dz++) {
+          if (x + dx >= 0 && x + dx < gridSize && z + dz >= 0 && z + dz < gridSize) {
+            const neighborX = x + dx;
+            const neighborZ = z + dz;
+            const neighborKey = `${neighborX},${neighborZ}`;
+            const neighborMaterial = textureCounts[neighborKey] ? textureCounts[neighborKey].material : textures[Math.floor(Math.random() * textures.length)];
+            neighboringTextures[neighborMaterial.uuid] = (neighboringTextures[neighborMaterial.uuid] || 0) + 1;
+          }
+        }
+      }
 
-      const ground = new Mesh(groundGeometry, groundMaterial);
+      // Sort neighboring textures by frequency
+      const sortedTextures = Object.keys(neighboringTextures).sort((a, b) => neighboringTextures[b] - neighboringTextures[a]);
+
+      // Pick the most frequent neighboring texture
+      const mostFrequentTexture = sortedTextures.length ? textures.find(texture => texture.uuid === sortedTextures[0]) : grassMaterial;
+
+      const ground = new Mesh(groundGeometry, mostFrequentTexture);
       ground.position.set(
           (x - gridSize / 2) * cellSize + chunkX * chunkSize + cellSize / 2 - streetWidth / 2 * chunkX,
           -0.1,
@@ -107,6 +127,11 @@ function generateChunk(chunkX: number, chunkZ: number) {
       );
       ground.rotation.x = -Math.PI / 2;
       chunk.add(ground);
+
+      // Update texture counts
+      const currentKey = `${x},${z}`;
+      textureCounts[currentKey] = { material: mostFrequentTexture, count: (textureCounts[currentKey]?.count || 0) + 1 };
+
 
       // right streets
       {

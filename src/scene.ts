@@ -120,7 +120,7 @@ function generateChunk(chunkX: number, chunkZ: number) {
         const street = new Mesh(streetGeometry, streetMaterial);
         street.position.set(
             (x - gridSize / 2) * cellSize + chunkX * chunkSize,
-            -0.09,
+            -0.11,
             (z - gridSize / 2) * cellSize + chunkZ * chunkSize + cellSize / 2
         );
         street.rotation.x = -Math.PI / 2;
@@ -138,7 +138,7 @@ function generateChunk(chunkX: number, chunkZ: number) {
 
         street.position.set(
             (x - gridSize / 2) * cellSize + chunkX * chunkSize + cellSize / 2 - streetWidth / 2 * chunkX,
-            -0.089,
+            -0.12,
             (z - gridSize / 2) * cellSize + chunkZ * chunkSize - streetWidth / 2 * chunkZ
         );
         street.rotation.x = -Math.PI / 2;

@@ -12,6 +12,7 @@ import {
   TextureLoader,
   MeshStandardMaterial,
   RepeatWrapping,
+  DoubleSide,
 } from "three";
 import { WorldInHandControls } from "@world-in-hand-controls/threejs-world-in-hand";
 import { toggleFullScreen } from "./helpers/fullscreen";
@@ -298,6 +299,11 @@ async function init() {
     });
 
     scene = new Scene();
+
+    const groundPlane = new Mesh(new PlaneGeometry(chunkSize * 3, chunkSize * 3), new MeshBasicMaterial({color: 0xff0000, side: DoubleSide, transparent: true, opacity: 0}));
+    groundPlane.rotateX(Math.PI / 2);
+    groundPlane.position.add(new Vector3(0, -0.15, 0));
+    scene.add(groundPlane);
   }
 
   // ===== 💡 LIGHTS =====

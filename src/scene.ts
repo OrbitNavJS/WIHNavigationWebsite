@@ -119,6 +119,7 @@ function generateChunk(chunkX: number, chunkZ: number) {
       // Pick the most frequent neighboring texture
       const mostFrequentTexture = sortedTextures.length ? textures.find(texture => texture.uuid === sortedTextures[0]) : grassMaterial;
 
+      mostFrequentTexture.depthWrite = false;
       const ground = new Mesh(groundGeometry, mostFrequentTexture);
       ground.position.set(
           (x - gridSize / 2) * cellSize + chunkX * chunkSize + cellSize / 2 - streetWidth / 2 * chunkX,

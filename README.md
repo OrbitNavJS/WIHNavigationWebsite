@@ -1,72 +1,20 @@
-# Three.js Vite Template with TypeScript
+# World-In-Hand Navigation for Three.js
 
-Three.js + Vite + TypeScript starter
+Welcome to the official showcase of our "World-In-Hand Navigation" extension developed as a part of a university seminar at Hasso-Plattner-Institut aimed at enhancing the functionalities of the Three.js framework. Our primary objective was to introduce a novel navigation approach to Three.js called "World-In-Hand" navigation.
 
-- [Demo](https://vite-threejs-ts-template.vercel.app/)
-- [Jump to CLI commands](#cli-commands)
+Visit our deployed website to explore the project in detail.
 
-## Copy (clone without git history)
+▶️ [Deployed Website Link]
 
-```shell
-npx degit pachoclo/vite-threejs-ts-template threejs-project
-```
+You can access the source code for our "World-In-Hand" navigation via the link below or utilize the npm package.
 
----
-<img width="796" alt="screenshot" src="https://github.com/pachoclo/vite-threejs-ts-template/assets/3608140/4b377045-8be5-4021-8cb8-84346a23f680">
----
+💻 [GitHub Repository](https://github.com/OrbitNavJS/ThreeJSWorldInHand)\
+📦 [npm Package](https://www.npmjs.com/package/@world-in-hand-controls/threejs-world-in-hand)
 
-## Stuff included in the `scene.ts`
 
-- [x] Geometry
-- [x] Material
-- [x] Mesh
-- [x] Ambient Light
-- [x] Point Light
-- [x] Camera
-- [x] Scene
-- [x] Canvas
-- [x] Renderer (WebGL)
-- [x] Loading Manager
-- [x] Orbit Controls
-- [x] Drag Controls
-- [x] Grid
-- [x] Antialias enabled
-- [x] Transparent canvas
-- [x] Responsive renderer and camera (to canvas size)
-- [x] Animation Loop
-- [x] Shadows
-- [x] Stats (FPS, ms)
-- [x] Full screen (double-click on canvas)
-- [x] Debug GUI
-
-## Tech Stack
+## Tech Stack for the Website
 
 - Three.js
 - TypeScript
 - Vite
-
-## CLI Commands
-
-Installation
-
-```bash
-npm i
-```
-
-Run dev mode
-
-```bash
-npm run dev
-```
-
-Build
-
-```bash
-npm run build
-```
-
-Run build
-
-```bash
-npm run preview
-```
+- Highlight.js

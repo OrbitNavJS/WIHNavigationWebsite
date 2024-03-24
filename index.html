@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/threejs-icon.svg" />
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/panda-syntax-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+    <script>hljs.highlightAll();</script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>World-In-Hand Navigation</title>
+  <script type="module" crossorigin src="/assets/index-Qx9fWwaO.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-qFdQOFhM.css">
+</head>
+
+<body>
+  <canvas id="scene"></canvas>
+  <div id="loading-overlay">
+    <p>Loading scene...</p>
+</div>
+  <div id="info-buttons">
+    <div id="rotate-info" class="info-btn btn">
+      <span>Rotate</span>
+      <img src="/icons/left-mouse.svg" width="23" height="23" alt="Left mouse button" />
+    </div>
+    <div id="zoom-info" class="info-btn btn">
+      <span>Zoom</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="23" height="23" fill="currentColor" class="bi bi-mouse"
+        viewBox="0 0 16 16">
+        <path
+          d="M8 3a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 3m4 8a4 4 0 0 1-8 0V5a4 4 0 1 1 8 0zM8 0a5 5 0 0 0-5 5v6a5 5 0 0 0 10 0V5a5 5 0 0 0-5-5" />
+      </svg>
+    </div>
+    <div id="pan-info" class="info-btn btn">
+      <span>Pan</span>
+      <img src="/icons/right-mouse.svg" width="23" height="23" alt="Right mouse button" />
+    </div>
+  </div>
+  <a href="#content" class="read-more-btn btn">
+    <span>Read more</span>
+    <span class="material-symbols-outlined">
+      arrow_downward
+    </span>
+  </a>
+  <a href="#scene" class="demo-btn btn">
+    <span>Demo</span>
+    <span class="material-symbols-outlined">
+      arrow_upward
+    </span>
+  </a>
+  <div id="content">
+    <h1 id="headline">World-In-Hand Navigation</h1>
+    <h4 id="subtitle"><i>An exploration into extending the Three.js Framework</i></h4>
+    <br>
+    <h3>About the project</h3>
+    <p><a href="https://threejs.org/">Three.js</a> is a popular JavaScript library used for 3D graphics and
+      visualisations on the web.
+      As part of the seminar "Extending the Three.js Framework," hosted by the Department of Computer Graphics Systems
+      at <a href="https://hpi.de/en/index.html">Hasso-Plattner-Institute</a>,
+      our team embarked on a journey to make a different navigation approach possible.
+      The primary goal was to explore and implement features aimed at enhancing the existing navigation capabilities,
+      while also ensuring robustness and user-friendliness.</p>
+    <h2>What is World-In-Hand Navigation?</h2>
+    <h3>Navigation in virtual environments</h3>
+    <p>
+      Navigation is a critical aspect of user interaction within virtual environments,
+      allowing users to move around and explore the digital world effectively. In the realm of 3D graphics,
+      we experience virtual environments through the lens of a virtual camera. While users may feel as though they are
+      directly
+      manipulating the scene, it is, in fact, the camera that is being moved. This can sometimes lead to a disconnect,
+      as the scene's spatial information is not always directly incorporated into the user's interaction.
+      <sup>[<a href="#ref1">1</a>, <a href="#ref2">2</a>]</sup>
+    </p>
+    <p>
+      The "World-In-Hand" navigation approach aims to bridge this gap by providing users with a more intuitive and
+      immersive navigation experience.
+      By allowing users to interact with the virtual world as if it were a tangible object in their hands, this method
+      enhances the sense of presence
+      and control, making navigation more intuitive, robust, and user-friendly.
+    </p>
+    <h3>Navigation in Three.js</h3>
+    <p>
+      Three.js provides a range of navigation controls out of the box, including <a
+        href="https://threejs.org/docs/#examples/en/controls/FlyControls">FlyControls</a>,
+      <a href="https://threejs.org/docs/#examples/en/controls/TrackballControls">TrackballControls</a> and
+      <a href="https://threejs.org/docs/#examples/en/controls/OrbitControls">OrbitControls</a>,
+      with the latter being the most commonly used. These controls are available as add-ons and can be easily integrated
+      into any Three.js project.
+      Impartial to the scene, they respond to user input and adjust the camera accordingly.
+      Like most navigation techniques, OrbitControls offer three primary modes of interaction:
+      rotation, zoom (techninally a dolly), and translation (panning), <sup>[<a href="#ref1">1</a>, <a href="#ref2">2</a>]</sup>.
+    </p>
+    <div id="video-container">
+      <div class="video-item">
+          <h4>Rotation</h4>
+          <video autoplay loop muted playsinline width="320" height="180" id="rotaionVideo">
+              <source src="/vids/rotate.mp4" type="video/mp4">
+              Your browser does not support the video tag.
+          </video>
+      </div>
+      <div class="video-item">
+          <h4>Zoom</h4>
+          <video autoplay loop muted playsinline width="320" height="180" id="zoomVideo">
+              <source src="/vids/zoom3.mp4" type="video/mp4">
+              Your browser does not support the video tag.
+          </video>
+      </div>
+      <div class="video-item">
+          <h4>Panning</h4>
+          <video autoplay loop muted playsinline width="320" height="180" id="panningVideo">
+              <source src="/vids/pan2.mp4" type="video/mp4">
+              Your browser does not support the video tag.
+          </video>
+      </div>
+  </div>
+  
+    <p>
+      However, these operations are focused on one predefined target point in the scene, limiting the flexibility to
+      interact with the scene as a whole.
+    </p>
+    <h2>Our Approach</h2>
+    <p>
+      Our approach to World-In-Hand navigation is based on the exact mouse position projected onto the scene.
+      This allows the user to grab a point or an object and move it around (panning),
+      rotate the scene around that point (rotating) or the point in the center of the screen, and zoom in and out to the
+      point.
+      Try it in our demo above or in <a href="https://orbitnavjs.github.io/ThreeJSWorldInHand/">this version</a> to
+      compare to OrbitControls!
+      You can use your mouse or interact through touch on mobile devices.
+    </p>
+    <h3>How it works</h3>
+    <p>
+      We calculate the exact mouse position by transforming the screen mouse position into normalized device coordinates
+      (NDC)
+      and reading the depth value from the depth buffer.
+      Three.js's <code>Vector3.unproject(camera)</code> method allows us to transform the NDC into world coordinates.
+      With these world coordinates we can then calculate precise movement vectors that we apply to the camera.
+    </p>
+    <h3>Enhancing the Navigation</h3>
+    <p>
+      In addition to the core navigation features, we have implemented several basic enhancements to further improve the
+      user experience.
+      These efforts are based on the idea of resilient or constrained navigation:
+      We aim to avoid potentially disorienting or confusing camera movements, such as flipping the scene upside down or
+      moving the camera too far
+      away, by constraining the camera's movement within certain limits. <sup>[<a href="#ref3">3</a>, <a
+          href="#ref4">4</a>, <a href="#ref5">5</a>]</sup>
+      <br>
+      Our enhancements include:
+    <ul>
+      <li>Limiting the cameras distance from the scene</li>
+      <li>Preventing the camera from flipping upside down</li>
+      <li>Clamping the possible scene depth for the mouse</li>
+      <li>Adjusting the camera's movement speed when zooming based on the scene's depth</li>
+      <li>Giving the option to prohibit rotation below the ground plane</li>
+      <li>Allowing the user to reset the camera to its initial position</li>
+    </ul>
+
+    Additionally, we have implemented a World-In-Hand-Controls Visualiser class. This feature allows developers using
+    our navigation to
+    visualise the constraints listed as well as other helpful information such as the mouse position in the scene or the
+    axes used for rotation.
+    We believe this will assist developers in better understanding the navigation, adapting it to their needs,
+    and identifying and addressing potential future issues.
+    </p>
+
+    <h3>Using our navigation</h3>
+    <p>
+      Using our World-In-Hand Navigation in your Three.js project is straightforward and requires only a few extra steps
+      compared to
+      the standard OrbitControls.
+      In general, we require you to use a WebGL2Renderer and render your scene into our custom
+      WorldInHandControls.navigationRenderTarget
+      to calculate the depth values for the mouse position:</p>
+      <div id="code-exl">
+      <h4>World-In-Hand Controls Usage</h4>
+      <h4>OrbitControls Usage</h4>
+      </div>
+      <div id="code-exl">
+      <pre><code class="language-typescript">
+// Last parameter is the amount of MSAA samples to use for the exposed render target
+const controls = new WorldInHandControls(perspectiveCamera, renderer.domElement, renderer, scene, 4);
+
+// When scene changes its size
+scene.dispatchEvent({type: 'change'});
+
+// If rendering on demand, listen to change events
+controls.addEventListener('change', render);
+
+// If the renderer.domElement was resized
+scene.dispatchEvent({type: 'resize'});
+
+// If manually changing camera, call this afterwards
+controls.reloadCamera();
+
+function render() {
+    // Render into the exposed render target
+    renderer.setRenderTarget(controls.navigationRenderTarget);
+    renderer.render(scene, perspectiveCamera);
+    
+    // Tell the controls a render has taken place and
+    // by default copy the render target to the canvas
+    controls.update();
+}
+        </code></pre>
+      <pre><code class="language-typescript">
+        
+const controls = new OrbitControls(camera, renderer.domElement);
+
+
+
+
+// If rendering on demand, listen to change events
+controls.addEventListener('change', render);
+
+
+
+
+// If manually changing camera, call this afterwards
+controls.update();
+
+function render() {
+    // Render into the exposed render target
+    renderer.setRenderTarget(null);
+    renderer.render(scene, perspectiveCamera);
+    
+    
+
+
+}
+        </code></pre>
+      </div>
+
+    <p>
+      We have published a package on <a
+        href="https://www.npmjs.com/package/@world-in-hand-controls/threejs-world-in-hand">npm</a>
+      that you can install and use in your project. As an alternative, you can also download the source code
+      from our <a href="https://github.com/OrbitNavJS/ThreeJSWorldInHand">GitHub repository</a>. You can find further
+      information on how to use our navigation under both links.
+    </p>
+
+    <h2>Summary & Future Work</h2>
+    <p>
+      In summary, our World-In-Hand navigation approach offers a more intuitive and immersive way to navigate virtual
+      environments in Three.js.
+      By allowing users to interact with the scene as if it were a tangible object in their hands, we aim to enhance the
+      sense of presence and control,
+      making navigation more intuitive, robust, and user-friendly.
+      Our implementation includes core navigation features such as panning, rotating, and zooming, as well as several
+      enhancements to improve the user experience.
+      We have also developed a World-In-Hand-Controls Visualiser class to help developers better understand and adapt
+      the navigation to their needs.
+    </p>
+
+    <p>
+      In the future, our approach could be further refined and expanded by adding new features and capabilities,
+      especially
+      regarding the resilience.
+      Some potential areas for improvement include:
+    <ul>
+      <li>Implementing advanced constraints for camera movement when rotating</li>
+      <li>Detecting and avoiding collisions between scene and camera</li>
+    </ul>
+    We also plan to create a pull request for Three.js to integrate our navigation into the examples similarly to the
+    OrbitControls.
+    </p>
+
+    <h2>Attribution</h2>
+    <p>The building models in the demo scene are based on <a
+        href="https://sketchfab.com/3d-models/low-poly-buildings-979efb05b9e3442285482252903e36dd">"Low Poly
+        Buildings"</a>
+      by <a href="https://sketchfab.com/Irfn_93">Irfn_93</a> licensed under <a
+        href="https://creativecommons.org/licenses/by/4.0/">CC-BY-4.0</a></p>
+
+    <h3>References</h3>
+    <ol>
+      <li id="ref1">Jankowski J, Hachet M. Advances in Interaction with 3D Environments. Computer Graphics Forum.
+        2014;34(1):152-190. doi:<a href="https://doi.org/10.1111/cgf.12466">https://doi.org/10.1111/cgf.12466</a></li>
+      <li id="ref2">Wagner F. Concept and Implementation of Navigation Techniques for Softwaremaps with GPU-based
+        Geometry Creation. Potsdam: University of Potsdam; 2016</li>
+      <li id="ref3">Buchholz H, Bohnet J, J. Doellner. Smart and Physically-Based Navigation in 3D Geovirtual
+        Environments. Ninth International Conference on Information Visualisation (IV'05). Published online October 11,
+        2006. doi:<a href="https://doi.org/10.1109/iv.2005.117">https://doi.org/10.1109/iv.2005.117</a></li>
+      <li id="ref4">Hildebrandt D, Timm R. An assisting, constrained 3D navigation technique for multiscale virtual 3D
+        city models. GeoInformatica. 2013;18(3):537-567. doi:<a
+          href="https://doi.org/10.1007/s10707-013-0189-8">https://doi.org/10.1007/s10707-013-0189-8</a></li>
+      <li id="ref5">Jul S. “This Is a Lot Easier!”: Constrained Movement Speeds Navigation. Accessed March 16, 2024. <a
+          href="https://public.websites.umich.edu/~sjul/papers/chi03_leylines.pdf">https://public.websites.umich.edu/~sjul/papers/chi03_leylines.pdf</a>
+      </li>
+    </ol>
+  </div>
+
+</body>
+
+</html>

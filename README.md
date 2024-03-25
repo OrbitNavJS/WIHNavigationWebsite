@@ -4,7 +4,7 @@ Welcome to the official showcase of our "World-In-Hand Navigation" extension dev
 
 Visit our deployed website to explore the project in detail.
 
-▶️ [Deployed Website Link]
+▶️ [Demo Website](https://orbitnavjs.github.io/WIHNavigationWebsite/)
 
 You can access the source code for our "World-In-Hand" navigation via the link below or utilize the npm package.
 

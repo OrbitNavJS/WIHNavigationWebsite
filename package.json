@@ -9,13 +9,13 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "@types/three": "^0.162.0",
+    "@types/three": "^0.163.0",
     "typescript": "^5.4.3",
     "vite": "^5.2.6"
   },
   "dependencies": {
-    "@world-in-hand-controls/threejs-world-in-hand": "^0.0.12",
+    "@world-in-hand-controls/threejs-world-in-hand": "^0.0.13",
     "lil-gui": "^0.19.2",
-    "three": "^0.162.0"
+    "three": "^0.163.0"
   }
 }

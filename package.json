@@ -14,8 +14,8 @@
     "vite": "^5.2.6"
   },
   "dependencies": {
-    "@world-in-hand-controls/threejs-world-in-hand": "^0.0.12",
+    "@world-in-hand-controls/threejs-world-in-hand": "^0.0.14",
     "lil-gui": "^0.19.2",
-    "three": "^0.162.0"
+    "three": "^0.164.1"
   }
 }
